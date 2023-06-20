@@ -137,7 +137,7 @@ let Theta = 0;
 function mainLoop(elapsed: number) {
     const time = Date.now();
     console.log(elapsed);
-    ctx.fillStyle = "#333355";
+    ctx.fillStyle = "#112244";
     ctx.fillRect(0, 0, width, height);
 
     Theta += 1 * elapsed / 1000;
@@ -156,10 +156,11 @@ function mainLoop(elapsed: number) {
 
     //Draw Triangles
     for (const tri of cube.tris) {
-        let triRotated = MultiplyTriMatrix(tri, matRotZ);
+        let triCentered = AddTriConst(tri, -0.5);
+        let triRotated = MultiplyTriMatrix(triCentered, matRotZ);
         triRotated = MultiplyTriMatrix(triRotated, matRotX);
 
-        const triTranslated = AddTriVector(triRotated, { x: 0, y: 0, z: 3 });
+        const triTranslated = AddTriVector(triRotated, { x: 0, y: 0, z: 2 });
         let triProjected = MultiplyTriMatrix(triTranslated, projectionMatrix);
 
         //Scale into view
