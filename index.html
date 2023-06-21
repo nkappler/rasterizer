@@ -14,7 +14,9 @@
             height: 100%;
         }
     </style>
-    <script src="src/index.js" ></script>
+    <script src="https://unpkg.com/requirejs@2.3.6"></script>
+    <script src="index.js" type="module"></script>
+    <script>require(["index"]);</script>
 </head>
 <body>
     <canvas></canvas>

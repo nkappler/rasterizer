@@ -1,0 +1,74 @@
+import { Matrix4 } from "./matrix";
+import { Tri } from "./tri";
+
+export namespace Canvas {
+    let width: number;
+    let height: number;
+    let ctx: CanvasRenderingContext2D;
+    const frametimes: [number, number, number, number, number, number, number] = [16.6, 16.6, 16.6, 16.6, 16.6, 16.6, 16.6];
+    let framecount = 0;
+    let medianElapsed = 16.6;
+
+    export function SetupCanvas() {
+        const canvas = document.querySelector("canvas");
+        if (!canvas) throw "canvas not found";
+        const _ctx = canvas.getContext("2d");
+        if (!_ctx) throw "2D Context could not be created";
+        ctx = _ctx;
+        width = canvas.getBoundingClientRect().width;
+        height = canvas.getBoundingClientRect().height;
+        canvas.setAttribute("width", width + "px");
+        canvas.setAttribute("height", height + "px");
+        const AspectRatio = height / width;
+        return AspectRatio;
+    }
+
+    export function clear(elapsed: number, color = "#112244") {
+        framecount++;
+        frametimes[framecount % frametimes.length] = elapsed;
+        medianElapsed = frametimes.reduce((a, b) => a + b) / frametimes.length;
+
+        ctx.lineWidth = 0;
+        ctx.fillStyle = color;
+        ctx.fillRect(0, 0, width, height);
+    }
+
+    function NormalizedToScreenSpace(tri: Tri): Tri {
+        const matrix = Matrix4.makeIdentity();
+        matrix[0][0] = 0.5 * width;
+        matrix[1][1] = 0.5 * height;
+        matrix[3][0] = 0.5 * width;
+        matrix[3][1] = 0.5 * height;
+        // Alternate implementation to the matrix above
+        // Offset into visible normalized space
+        //tri = Tri.AddVector(tri, { x: 1, y: 1, z: 0 });
+        // un-normalize to screen coordinates
+        //tri = Tri.MultiplyVector(tri, { x: 0.5 * width, y: 0.5 * height, z: 1 })
+        return Tri.MultiplyMatrix(tri, matrix);
+    }
+
+    export function DrawTriangle(tri: Tri, color = "#ffffff", lineWidth = 1) {
+        const [p1, p2, p3] = NormalizedToScreenSpace(tri);
+        ctx.lineWidth = lineWidth;
+        ctx.strokeStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.lineTo(p3.x, p3.y);
+        ctx.lineTo(p1.x, p1.y);
+        ctx.closePath();
+        ctx.stroke();
+    }
+
+    export function FillTriangle(tri: Tri, color = "#ffffff", fillStyle?: string, lineWidth = 0) {
+        DrawTriangle(tri, color, lineWidth);
+        ctx.fillStyle = fillStyle ?? color;
+        ctx.fill();
+    }
+
+    export function DrawDebugInfo(tris: number) {
+        ctx.fillStyle = "white"
+        ctx.fillText((1000 / medianElapsed).toFixed(0) + " FPS", 10, 10);
+        ctx.fillText("Tris: " + tris, 10, 25);
+    }
+}
