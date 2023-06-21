@@ -10,7 +10,7 @@ if (document.readyState === "complete") {
     });
 }
 
-let mesh: Mesh = {tris: []};
+let mesh: Mesh = { tris: [] };
 
 let ctx: CanvasRenderingContext2D;
 let width: number;
@@ -176,6 +176,8 @@ function DotProduct(a: Vec3D, b: Vec3D): number {
 }
 
 let Theta = 0;
+const frametimes: [number, number, number, number, number, number, number] = [16.6, 16.6, 16.6, 16.6, 16.6, 16.6, 16.6];
+let framecount = 0;
 
 const camera: Vec3D = { x: 0, y: 0, z: 0 };
 const light: Vec3D = { x: 0, y: 0, z: -1 };
@@ -183,7 +185,6 @@ const color: Vec3D = { x: 255, y: 255, z: 255 };
 
 function mainLoop(elapsed: number) {
     const time = Date.now();
-    console.log(elapsed);
     ctx.fillStyle = "#112244";
     ctx.fillRect(0, 0, width, height);
 
@@ -212,14 +213,14 @@ function mainLoop(elapsed: number) {
 
         const triNormal = GetNormal(triTranslated);
         // is the triangle visible?
-        if (DotProduct(triNormal, Normalize(SubtractVector(triTranslated[0], camera))) < 0) { 
+        if (DotProduct(triNormal, Normalize(SubtractVector(triTranslated[0], camera))) < 0) {
             trisToDraw.push(triTranslated);
-         }
+        }
     }
 
-    trisToDraw.sort((a,b) => {
-        const z1 = (a[0].z + a[1].z + a[2].z ) / 3;
-        const z2 = (b[0].z + b[1].z + b[2].z ) / 3;
+    trisToDraw.sort((a, b) => {
+        const z1 = (a[0].z + a[1].z + a[2].z) / 3;
+        const z2 = (b[0].z + b[1].z + b[2].z) / 3;
         return z2 - z1;
     });
 
@@ -237,6 +238,12 @@ function mainLoop(elapsed: number) {
         FillTriangle(ctx, triProjected, `rgba(${lit.x}, ${lit.y}, ${lit.z})`);
     }
 
+    ctx.fillStyle = "white"
+    framecount++;
+    frametimes[framecount % frametimes.length] = elapsed;
+    const medianElapsed = frametimes.reduce((a, b) => a + b) / frametimes.length;
+    ctx.fillText((1000 / medianElapsed).toFixed(0) + " FPS", 10, 10);
+    ctx.fillText("Tris: " + trisToDraw.length, 10, 25);
 
     requestAnimationFrame(() => mainLoop(Date.now() - time));
 }
