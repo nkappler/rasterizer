@@ -91,4 +91,33 @@ export class Matrix4 extends Array {
         }
         return matrix;
     }
+
+    public static PointAt(pos: Vec3D, target: Vec3D, _up = new Vec3D(0, 1, 0)): Matrix4 {
+        const forward = Vec3D.Subtract(target, pos).normalized;
+        // consider pitch
+        const a = Vec3D.MultiplyConst(forward, Vec3D.DotProduct(_up, forward));
+        const up = Vec3D.Subtract(_up, a).normalized;
+        const right = Vec3D.CrossProduct(forward, up);
+
+        return [
+            [right.x, right.y, right.z, 0],
+            [up.x, up.y, up.z, 0],
+            [forward.x, forward.y, forward.z, 0],
+            [pos.x, pos.y, pos.z, 1]
+        ];
+    }
+
+    /** only for rotation/translation matrices */
+    public static QuickInverse(m: Matrix4): Matrix4 {
+        const A = new Vec3D(...m[0]);
+        const B = new Vec3D(...m[1]);
+        const C = new Vec3D(...m[2]);
+        const T = new Vec3D(...m[3]);
+        return [
+            [A.x, B.x, C.x, 0],
+            [A.y, B.y, C.y, 0],
+            [A.z, B.z, C.z, 0],
+            [-Vec3D.DotProduct(T, A), -Vec3D.DotProduct(T,B), -Vec3D.DotProduct(T, C), 1]
+        ];
+    }
 }

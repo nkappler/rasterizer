@@ -5,7 +5,7 @@ export namespace Canvas {
     let width: number;
     let height: number;
     let ctx: CanvasRenderingContext2D;
-    const frametimes: [number, number, number, number, number, number, number] = [16.6, 16.6, 16.6, 16.6, 16.6, 16.6, 16.6];
+    const frametimes = new Array(10).fill(Infinity);
     let framecount = 0;
     let medianElapsed = 16.6;
 
@@ -34,17 +34,18 @@ export namespace Canvas {
     }
 
     function NormalizedToScreenSpace(tri: Tri): Tri {
-        const matrix = Matrix4.makeIdentity();
-        matrix[0][0] = 0.5 * width;
-        matrix[1][1] = 0.5 * height;
-        matrix[3][0] = 0.5 * width;
-        matrix[3][1] = 0.5 * height;
+        // const matrix = Matrix4.makeIdentity();
+        // matrix[0][0] = 0.5 * width;
+        // matrix[1][1] = 0.5 * height;
+        // matrix[3][0] = 0.5 * width;
+        // matrix[3][1] = 0.5 * height;
+        // return Tri.MultiplyMatrix(tri, matrix);
+
         // Alternate implementation to the matrix above
         // Offset into visible normalized space
-        //tri = Tri.AddVector(tri, { x: 1, y: 1, z: 0 });
+        tri = Tri.AddVector(tri, { x: 1, y: 1, z: 0 });
         // un-normalize to screen coordinates
-        //tri = Tri.MultiplyVector(tri, { x: 0.5 * width, y: 0.5 * height, z: 1 })
-        return Tri.MultiplyMatrix(tri, matrix);
+        return Tri.MultiplyVector(tri, { x: 0.5 * width, y: 0.5 * height, z: 1 })
     }
 
     export function DrawTriangle(tri: Tri, color = "#ffffff", lineWidth = 1) {
@@ -55,7 +56,6 @@ export namespace Canvas {
         ctx.moveTo(p1.x, p1.y);
         ctx.lineTo(p2.x, p2.y);
         ctx.lineTo(p3.x, p3.y);
-        ctx.lineTo(p1.x, p1.y);
         ctx.closePath();
         ctx.stroke();
     }
@@ -66,9 +66,11 @@ export namespace Canvas {
         ctx.fill();
     }
 
-    export function DrawDebugInfo(tris: number) {
+    export function DrawDebugInfo(tris: number, projectionTime: number, clippingTime: number) {
         ctx.fillStyle = "white"
         ctx.fillText((1000 / medianElapsed).toFixed(0) + " FPS", 10, 10);
         ctx.fillText("Tris: " + tris, 10, 25);
+        ctx.fillText("Projection: " + projectionTime + "ms", 10, 40);
+        ctx.fillText("Clipping: " + clippingTime + "ms", 10, 55);
     }
 }

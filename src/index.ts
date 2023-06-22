@@ -9,46 +9,149 @@ var mesh: Mesh = { tris: [] };
 let projectionMatrix: Matrix4;
 let Theta = 0;
 
-const camera = new Vec3D(0, 0, 0);
-const light: IVec3D = new Vec3D(0, 0, -1);
+let camera = new Vec3D(0, 0, 0);
+let LookDir = new Vec3D(0, 0, 1);
+let Yaw = 0;
+let Pitch = 0;
+const light: IVec3D = new Vec3D(0.5, 0.5, -1);
 const color: IVec3D = { x: 255, y: 255, z: 255 };
+const keysPressed: Record<KeyboardEvent["code"], boolean> = {};
 
 setup();
 mainLoop(0);
 
-function setup() {
-    window.removeEventListener("resize", setup);
 
+window.addEventListener("keydown", e => {
+    keysPressed[e.code] = true;
+    e.preventDefault();
+});
+
+window.addEventListener("keyup", e => {
+    keysPressed[e.code] = false;
+});
+
+window.addEventListener("resize", setup);
+
+function setup() {
     if (mesh.tris.length === 0) {
-        Mesh.LoadFromObjFile("./src/Spaceship.obj").then(data => mesh = data);
+        Mesh.LoadFromObjFile("./src/teapot.obj").then(data => mesh = data);
     }
 
     const AspectRatio = Canvas.SetupCanvas();
     projectionMatrix = Matrix4.MakeProjection(90, AspectRatio, 0.1, 1000);
-
-    window.addEventListener("resize", setup);
 }
 
 function mainLoop(elapsed: number) {
-    const time = Date.now();
+    performance.clearMarks();
+    performance.mark("FrameStart");
+
+    const forward = Vec3D.MultiplyConst(LookDir, 8 * elapsed / 1000);
+    const right = Vec3D.MultiplyConst(Vec3D.CrossProduct(LookDir, new Vec3D(0, 1, 0)), 8 * elapsed / 1000);
+
+    if (keysPressed["KeyA"]) {
+        camera = Vec3D.Subtract(camera, right);
+    }
+
+    if (keysPressed["KeyD"]) {
+        camera = Vec3D.Add(camera, right);
+    }
+
+    if (keysPressed["KeyQ"]) {
+        camera.y += 8 * elapsed / 1000;
+    }
+
+    if (keysPressed["KeyE"]) {
+        camera.y -= 8 * elapsed / 1000;
+    }
+
+    if (keysPressed["KeyW"]) {
+        camera = Vec3D.Add(camera, forward);
+    }
+
+    if (keysPressed["KeyS"]) {
+        camera = Vec3D.Subtract(camera, forward);
+    }
+
+    if (keysPressed["ArrowLeft"]) {
+        Yaw -= 2 * elapsed / 1000;
+    }
+
+    if (keysPressed["ArrowRight"]) {
+        Yaw += 2 * elapsed / 1000
+    }
+
+    if (keysPressed["ArrowUp"]) {
+        Pitch -= 2 * elapsed / 1000;
+    }
+
+    if (keysPressed["ArrowDown"]) {
+        Pitch += 2 * elapsed / 1000;
+    }
+
     Canvas.clear(elapsed);
 
-    Theta += 1 * elapsed / 1000;
+    // Theta += 1 * elapsed / 1000;
     const matRotZ = Matrix4.MakeRotationZ(Theta);
     const matRotX = Matrix4.MakeRotationX(Theta * 0.5);
     const matTrans = Matrix4.MakeTranslation({ x: 0, y: 0, z: 10 });
     let matWorld = Matrix4.MultiplyMatrix(matRotZ, matRotX);
     matWorld = Matrix4.MultiplyMatrix(matWorld, matTrans);
 
+    const matCameraRot = //Matrix4.MultiplyMatrix(
+        Matrix4.MakeRotationY(Yaw)
+    //Matrix4.MakeRotationX(Pitch));
+
+    // look direction rotated around Y Axis
+    LookDir = Matrix4.MultiplyVector(new Vec3D(0, 0, 1), matCameraRot);
+    // offset to camera position to get world coordinates
+    const target = Vec3D.Add(camera, LookDir);
+    // point camera at target
+    const matCamera = Matrix4.PointAt(camera, target);
+    // inverting the camera matrix yields the view matrix
+    const matView = Matrix4.QuickInverse(matCamera);
+
+    performance.mark("cameraReady");
+
     const trisToDraw: Tri[] = [];
 
-    //Draw Triangles
+    //Project Triangles
     for (const tri of mesh.tris) {
         let triTransformed = Tri.MultiplyMatrix(tri, matWorld);
+
         const triNormal = Tri.GetNormal(triTransformed);
         // is the triangle visible?
         if (Vec3D.DotProduct(triNormal, Vec3D.Subtract(triTransformed[0], camera).normalized) < 0) {
-            trisToDraw.push(triTransformed);
+            // Lighting
+            const triNormal = Tri.GetNormal(triTransformed);
+            const luminance = Math.max(0.1, Vec3D.DotProduct(light, triNormal));
+            const lit = Vec3D.MultiplyConst(color, luminance);
+
+            //Convert World Space -> View Space
+            const triViewed = Tri.MultiplyMatrix(triTransformed, matView);
+
+            // Clip Viewed Triangle against near plane
+            let clippedTris = Tri.ClipAgainstPlane(new Vec3D(0, 0, 0.1), new Vec3D(0, 0, 1), triViewed);
+            // Clip Viewed Triangle against far plane
+            clippedTris = clippedTris.reduce((prev, current) => [...prev, ...Tri.ClipAgainstPlane(new Vec3D(0, 0, 100), new Vec3D(0, 0, -1), current)], [] as Tri[]);
+
+            for (const clippedTri of clippedTris) {
+                // Project from 3D -> 2D
+                const triProjected = Tri.MultiplyMatrix(clippedTri, projectionMatrix);
+
+                // normalize (frustum) the result of the matrix multiplication
+                const [w1, w2, w3] = triProjected.map((p: Vec3D) => 1 / p.w);
+                const triFrustum = Tri.MultiplyVectorAsConst(triProjected, new Vec3D(w1, w2, w3));
+
+                const matInvertXY = Matrix4.makeIdentity();
+                // matInvertXY[0][0] = -1;
+                matInvertXY[1][1] = -1;
+
+                // fix invert axis
+                const triInverted = Tri.MultiplyMatrix(triFrustum, matInvertXY);
+
+                Object.assign(triInverted, { lit });
+                trisToDraw.push(triInverted);
+            }
         }
     }
 
@@ -58,20 +161,50 @@ function mainLoop(elapsed: number) {
         return z2 - z1;
     });
 
+    performance.mark("clippingStart");
+
     for (const tri of trisToDraw) {
-        const triNormal = Tri.GetNormal(tri);
-        let triProjected = Tri.MultiplyMatrix(tri, projectionMatrix);
+        const listTriangles: Tri[] = [tri];
+        let nNewTriangles = 1;
 
-        // normalize (frustum) the result of the matrix multiplication
-        const [x, y, z] = triProjected.map((p: Vec3D) => 1 / p.w);
-        triProjected = Tri.MultiplyVectorAsConst(triProjected, new Vec3D(x, y, z));
+        for (let p = 0; p < 4; p++) {
+            let nTrisToAdd: Tri[] = [];
+            nNewTriangles = listTriangles.length;
+            while (nNewTriangles > 0) {
+                // Take triangle from front of queue
+                const test = listTriangles[0];
+                listTriangles.shift();
+                nNewTriangles--;
 
-        const lit = Vec3D.MultiplyConst(color, Vec3D.DotProduct(light, triNormal));
+                // Clip it against a plane. We only need to test each 
+                // subsequent plane, against subsequent new triangles
+                // as all triangles after a plane clip are guaranteed
+                // to lie on the inside of the plane.
+                switch (p) {
+                    case 0: nTrisToAdd = Tri.ClipAgainstPlane(new Vec3D(0, -1, 0), new Vec3D(0, 1, 0), test); break;
+                    case 1: nTrisToAdd = Tri.ClipAgainstPlane(new Vec3D(0, 1, 0), new Vec3D(0, -1, 0), test); break;
+                    case 2: nTrisToAdd = Tri.ClipAgainstPlane(new Vec3D(-1, 0, 0), new Vec3D(1, 0, 0), test); break;
+                    case 3: nTrisToAdd = Tri.ClipAgainstPlane(new Vec3D(1, 0, 0), new Vec3D(-1, 0, 0), test); break;
+                }
 
-        Canvas.FillTriangle(triProjected, `rgba(${lit.x}, ${lit.y}, ${lit.z})`);
+                // Clipping may yield a variable number of triangles, so
+                // add these new ones to the back of the queue for subsequent
+                // clipping against next planes
+                listTriangles.push(...nTrisToAdd);
+            }
+        }
+
+        for (const tri of listTriangles) {
+            const lit = (tri as any).lit ?? new Vec3D(255, 255, 255);
+
+            Canvas.FillTriangle(tri, `rgba(${lit.x}, ${lit.y}, ${lit.z})`);
+        }
     }
 
-    Canvas.DrawDebugInfo(trisToDraw.length);
+    Canvas.DrawDebugInfo(
+        trisToDraw.length,
+        performance.measure("projection", "cameraReady", "clippingStart").duration,
+        performance.measure("clipping", "clippingStart").duration);
 
-    requestAnimationFrame(() => mainLoop(Date.now() - time));
+    requestAnimationFrame(() => mainLoop(performance.measure("elapsed", "FrameStart").duration));
 }

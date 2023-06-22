@@ -50,10 +50,21 @@ export class Vec3D implements IVec3D {
             a.y * b.z - a.z * b.y,
             a.z * b.x - a.x * b.z,
             a.x * b.y - a.y * b.x
-        ).normalized;
+        );
     }
 
     public static DotProduct(a: IVec3D, b: IVec3D) {
         return a.x * b.x + a.y * b.y + a.z * b.z;
+    }
+
+    public static IntersectPlane(point: Vec3D, _normal: Vec3D, lineStart: Vec3D, lineEnd: Vec3D) {
+        const normal = _normal.normalized;
+        const planeD = -Vec3D.DotProduct(point, normal);
+        const ad = Vec3D.DotProduct(lineStart, normal);
+        const bd = Vec3D.DotProduct(lineEnd, normal);
+        const t = (-planeD - ad) / (bd - ad);
+        const lineStartToEnd = Vec3D.Subtract(lineEnd, lineStart);
+        const lineToIntersect = Vec3D.MultiplyConst(lineStartToEnd, t);
+        return Vec3D.Add(lineStart, lineToIntersect);
     }
 }
