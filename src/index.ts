@@ -48,6 +48,20 @@ function mainLoop(elapsed: number) {
     const forward = Vec3D.MultiplyConst(LookDir, 8 * elapsed / 1000);
     const right = Vec3D.MultiplyConst(Vec3D.CrossProduct(LookDir, new Vec3D(0, 1, 0)), 8 * elapsed / 1000);
 
+    const matCameraRot = Matrix4.MultiplyMatrix(
+        Matrix4.MakeRotationX(Pitch),
+        Matrix4.MakeRotationY(Yaw)
+    );
+
+    // look direction rotated around Y Axis
+    LookDir = Matrix4.MultiplyVector(new Vec3D(0, 0, 1), matCameraRot);
+    // offset to camera position to get world coordinates
+    const target = Vec3D.Add(camera, LookDir);
+    // point camera at target
+    const matCamera = Matrix4.PointAt(camera, target);
+    // inverting the camera matrix yields the view matrix
+    const matView = Matrix4.QuickInverse(matCamera);
+
     if (keysPressed["KeyA"]) {
         camera = Vec3D.Subtract(camera, right);
     }
@@ -81,11 +95,15 @@ function mainLoop(elapsed: number) {
     }
 
     if (keysPressed["ArrowUp"]) {
-        Pitch -= 2 * elapsed / 1000;
+        Pitch = Pitch - 2 * elapsed / 1000;
+        Pitch = Math.max(Pitch, -Math.PI/2.1);
+
+        // TODO: fix translation scaling with Pitch
     }
 
     if (keysPressed["ArrowDown"]) {
         Pitch += 2 * elapsed / 1000;
+        Pitch = Math.min(Pitch, Math.PI/2.1);
     }
 
     Canvas.clear(elapsed);
@@ -96,19 +114,6 @@ function mainLoop(elapsed: number) {
     const matTrans = Matrix4.MakeTranslation({ x: 0, y: 0, z: 10 });
     let matWorld = Matrix4.MultiplyMatrix(matRotZ, matRotX);
     matWorld = Matrix4.MultiplyMatrix(matWorld, matTrans);
-
-    const matCameraRot = //Matrix4.MultiplyMatrix(
-        Matrix4.MakeRotationY(Yaw)
-    //Matrix4.MakeRotationX(Pitch));
-
-    // look direction rotated around Y Axis
-    LookDir = Matrix4.MultiplyVector(new Vec3D(0, 0, 1), matCameraRot);
-    // offset to camera position to get world coordinates
-    const target = Vec3D.Add(camera, LookDir);
-    // point camera at target
-    const matCamera = Matrix4.PointAt(camera, target);
-    // inverting the camera matrix yields the view matrix
-    const matView = Matrix4.QuickInverse(matCamera);
 
     performance.mark("cameraReady");
 
