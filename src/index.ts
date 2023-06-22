@@ -20,6 +20,9 @@ const keysPressed: Record<KeyboardEvent["code"], boolean> = {};
 setup();
 mainLoop(0);
 
+document.querySelector("canvas")?.addEventListener("click", e => {
+    (e.target as HTMLCanvasElement).requestPointerLock();
+})
 
 window.addEventListener("keydown", e => {
     keysPressed[e.code] = true;
@@ -28,6 +31,15 @@ window.addEventListener("keydown", e => {
 
 window.addEventListener("keyup", e => {
     keysPressed[e.code] = false;
+});
+
+window.addEventListener("mousemove", e => {
+    if (document.pointerLockElement === null) return;
+
+    Yaw += e.movementX * 0.001;
+    Pitch += e.movementY * 0.001;
+    Pitch = Math.max(Pitch, -Math.PI / 2.1);
+    Pitch = Math.min(Pitch, Math.PI / 2.1);
 });
 
 window.addEventListener("resize", setup);
@@ -96,14 +108,14 @@ function mainLoop(elapsed: number) {
 
     if (keysPressed["ArrowUp"]) {
         Pitch = Pitch - 2 * elapsed / 1000;
-        Pitch = Math.max(Pitch, -Math.PI/2.1);
+        Pitch = Math.max(Pitch, -Math.PI / 2.1);
 
         // TODO: fix translation scaling with Pitch
     }
 
     if (keysPressed["ArrowDown"]) {
         Pitch += 2 * elapsed / 1000;
-        Pitch = Math.min(Pitch, Math.PI/2.1);
+        Pitch = Math.min(Pitch, Math.PI / 2.1);
     }
 
     Canvas.clear(elapsed);
