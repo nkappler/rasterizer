@@ -126,10 +126,12 @@ function mainLoop(elapsed: number) {
     const matTrans = Matrix4.MakeTranslation({ x: 0, y: 0, z: 10 });
     let matWorld = Matrix4.MultiplyMatrix(matRotZ, matRotX);
     matWorld = Matrix4.MultiplyMatrix(matWorld, matTrans);
+    const matInvertY = Matrix4.makeIdentity();
+    matInvertY[1][1] = -1;
 
     performance.mark("cameraReady");
 
-    const trisToDraw: Tri[] = [];
+    const projectedTris: Tri[] = [];
 
     //Project Triangles
     for (const tri of mesh.tris) {
@@ -139,7 +141,6 @@ function mainLoop(elapsed: number) {
         // is the triangle visible?
         if (Vec3D.DotProduct(triNormal, Vec3D.Subtract(triTransformed[0], camera).normalized) < 0) {
             // Lighting
-            const triNormal = Tri.GetNormal(triTransformed);
             const luminance = Math.max(0.1, Vec3D.DotProduct(light, triNormal));
             const lit = Vec3D.MultiplyConst(color, luminance);
 
@@ -159,20 +160,16 @@ function mainLoop(elapsed: number) {
                 const [w1, w2, w3] = triProjected.map((p: Vec3D) => 1 / p.w);
                 const triFrustum = Tri.MultiplyVectorAsConst(triProjected, new Vec3D(w1, w2, w3));
 
-                const matInvertXY = Matrix4.makeIdentity();
-                // matInvertXY[0][0] = -1;
-                matInvertXY[1][1] = -1;
-
                 // fix invert axis
-                const triInverted = Tri.MultiplyMatrix(triFrustum, matInvertXY);
+                const triInverted = Tri.MultiplyMatrix(triFrustum, matInvertY);
 
                 Object.assign(triInverted, { lit });
-                trisToDraw.push(triInverted);
+                projectedTris.push(triInverted);
             }
         }
     }
 
-    trisToDraw.sort((a, b) => {
+    projectedTris.sort((a, b) => {
         const z1 = (a[0].z + a[1].z + a[2].z) / 3;
         const z2 = (b[0].z + b[1].z + b[2].z) / 3;
         return z2 - z1;
@@ -180,7 +177,9 @@ function mainLoop(elapsed: number) {
 
     performance.mark("clippingStart");
 
-    for (const tri of trisToDraw) {
+    const trisToDraw: Tri[] = [];
+
+    for (const tri of projectedTris) {
         const listTriangles: Tri[] = [tri];
         let nNewTriangles = 1;
 
@@ -193,7 +192,7 @@ function mainLoop(elapsed: number) {
                 listTriangles.shift();
                 nNewTriangles--;
 
-                // Clip it against a plane. We only need to test each 
+                // Clip it against a plane. We only need to test each
                 // subsequent plane, against subsequent new triangles
                 // as all triangles after a plane clip are guaranteed
                 // to lie on the inside of the plane.
@@ -210,13 +209,15 @@ function mainLoop(elapsed: number) {
                 listTriangles.push(...nTrisToAdd);
             }
         }
-
-        for (const tri of listTriangles) {
-            const lit = (tri as any).lit ?? new Vec3D(255, 255, 255);
-
-            Canvas.FillTriangle(tri, `rgba(${lit.x}, ${lit.y}, ${lit.z})`);
-        }
+        trisToDraw.push(...listTriangles);
     }
+
+    for (const tri of trisToDraw) {
+        const lit = (tri as any).lit ?? new Vec3D(255, 255, 255);
+
+        Canvas.FillTriangle(tri, `rgba(${lit.x}, ${lit.y}, ${lit.z})`);
+    }
+
 
     Canvas.DrawDebugInfo(
         trisToDraw.length,

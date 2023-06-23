@@ -1,4 +1,3 @@
-import { Matrix4 } from "./matrix";
 import { Tri } from "./tri";
 
 export namespace Canvas {
@@ -70,7 +69,7 @@ export namespace Canvas {
         ctx.fillStyle = "white"
         ctx.fillText((1000 / medianElapsed).toFixed(0) + " FPS", 10, 10);
         ctx.fillText("Tris: " + tris, 10, 25);
-        ctx.fillText("Projection: " + projectionTime + "ms", 10, 40);
-        ctx.fillText("Clipping: " + clippingTime + "ms", 10, 55);
+        ctx.fillText("Projection: " + projectionTime.toFixed(1) + "ms", 10, 40);
+        ctx.fillText("Clipping: " + clippingTime.toFixed(1) + "ms", 10, 55);
     }
 }
