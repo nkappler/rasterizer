@@ -45,6 +45,13 @@ export class Vec3D implements IVec3D {
         return new Vec3D(v.x / l, v.y / l, v.z / l);
     }
 
+    public get inverted() {
+        return Vec3D.Invert(this);
+    }
+    public static Invert(v: IVec3D) {
+        return Vec3D.MultiplyConst(v, -1);
+    }
+
     public static CrossProduct(a: IVec3D, b: IVec3D) {
         return new Vec3D(
             a.y * b.z - a.z * b.y,
@@ -66,5 +73,21 @@ export class Vec3D implements IVec3D {
         const lineStartToEnd = Vec3D.Subtract(lineEnd, lineStart);
         const lineToIntersect = Vec3D.MultiplyConst(lineStartToEnd, t);
         return Vec3D.Add(lineStart, lineToIntersect);
+    }
+
+    get r() { 
+        return this.x;
+    }
+
+    get g() { 
+        return this.y;
+    }
+
+    get b() { 
+        return this.x;
+    }
+
+    get a() { 
+        return this.w;
     }
 }

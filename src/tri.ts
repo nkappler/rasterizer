@@ -47,7 +47,7 @@ export class Tri extends Array {
         ];
     }
 
-    public static GetNormal([p1, p2, p3]: Tri): IVec3D {
+    public static GetNormal([p1, p2, p3]: Tri): Vec3D {
         const a = Vec3D.Subtract(p2, p1);
         const b = Vec3D.Subtract(p3, p2);
         return Vec3D.CrossProduct(a, b).normalized;
