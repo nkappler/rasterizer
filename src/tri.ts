@@ -47,10 +47,10 @@ export class Tri extends Array {
         ];
     }
 
-    public static GetNormal([p1, p2, p3]: Tri): Vec3D {
+    public static GetNormal([p1, p2, p3]: Tri): IVec3D {
         const a = Vec3D.Subtract(p2, p1);
         const b = Vec3D.Subtract(p3, p2);
-        return Vec3D.CrossProduct(a, b).normalized;
+        return Vec3D.Normalize(Vec3D.CrossProduct(a, b));
     }
 
     public static MultiplyMatrix([p1, p2, p3]: Tri, mat: Matrix4): Tri {
@@ -66,17 +66,16 @@ export class Tri extends Array {
      * 
      * returns clipped triangles otherwise
      */
-    public static ClipAgainstPlane(point: Vec3D, _normal: Vec3D, tri: Tri): Tri[] {
+    public static ClipAgainstPlane(point: IVec3D, normal: Vec3D, tri: Tri,): Tri[] {
         const lit = (tri as any).lit;
-        const normal = _normal.normalized;
 
         // Return signed shortest distance from point to plane, plane normal must be normalised
-        const dist = (p: Vec3D) => Vec3D.DotProduct(normal, p) - Vec3D.DotProduct(normal, point);
+        const dist = (p: IVec3D) => Vec3D.DotProduct(normal, p) - Vec3D.DotProduct(normal, point);
 
         // Create two temporary storage arrays to classify points either side of plane
         // If distance sign is positive, point lies on "inside" of plane
-        let inside_points: Vec3D[] = []; let insideCount = 0;
-        let outside_points: Vec3D[] = []; let outsideCount = 0;
+        let inside_points: IVec3D[] = []; let insideCount = 0;
+        let outside_points: IVec3D[] = []; let outsideCount = 0;
 
         // Get signed distance of each point in triangle to plane
         const d0 = dist(tri[0]);

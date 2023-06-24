@@ -92,11 +92,11 @@ export class Matrix4 extends Array {
         return matrix;
     }
 
-    public static PointAt(pos: Vec3D, target: Vec3D, _up = new Vec3D(0, 1, 0)): Matrix4 {
-        const forward = Vec3D.Subtract(target, pos).normalized;
+    public static PointAt(pos: IVec3D, target: IVec3D, _up: IVec3D = new Vec3D(0, 1, 0)): Matrix4 {
+        const forward = Vec3D.Normalize(Vec3D.Subtract(target, pos));
         // consider pitch
         const a = Vec3D.MultiplyConst(forward, Vec3D.DotProduct(_up, forward));
-        const up = Vec3D.Subtract(_up, a).normalized;
+        const up = Vec3D.Normalize(Vec3D.Subtract(_up, a));
         const right = Vec3D.CrossProduct(forward, up);
 
         return [
@@ -117,7 +117,7 @@ export class Matrix4 extends Array {
             [A.x, B.x, C.x, 0],
             [A.y, B.y, C.y, 0],
             [A.z, B.z, C.z, 0],
-            [-Vec3D.DotProduct(T, A), -Vec3D.DotProduct(T,B), -Vec3D.DotProduct(T, C), 1]
+            [-Vec3D.DotProduct(T, A), -Vec3D.DotProduct(T, B), -Vec3D.DotProduct(T, C), 1]
         ];
     }
 }

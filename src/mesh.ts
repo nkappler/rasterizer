@@ -1,14 +1,13 @@
 import { Camera } from "./camera";
 import { Entity } from "./entity";
-import { Matrix4 } from "./matrix";
 import { Tri } from "./tri";
 import { IVec3D, Vec3D } from "./vector";
 
 const light: IVec3D = new Vec3D(0.5, 0.5, -1);
 const color: IVec3D = { x: 255, y: 255, z: 255 };
 
-export class Mesh extends Entity{
-    public normals: Vec3D[];
+export class Mesh extends Entity {
+    public normals: IVec3D[];
     public tris: Tri[];
     public colors: Vec3D[];
 
@@ -46,21 +45,35 @@ export class Mesh extends Entity{
     }
 
     public projectTris(camera: Camera) {
-        return this.tris.reduce((list, tri, index) => {
-            const triNormal = this.normals[index];
-            // is the triangle visible?
-            if (camera.isFacingTowards(triNormal, tri[0])) {
-                // Lighting
-                if (!this.colors[index]) {
-                    const luminance = Math.max(0.1, Vec3D.DotProduct(light, triNormal));
-                    this.colors[index] = Vec3D.MultiplyConst(color, luminance);
-                }
-                Object.assign(tri, { lit: this.colors[index] });
+        const visible = this.tris.map((t, i) => ({ i, d: Vec3D.DotProduct(this.normals[i], Vec3D.Normalize(Vec3D.Subtract(t[0], camera.pos))) }));
+        const trisToProject = visible.filter(({ d }) => d < 0);
 
-                list.push(...camera.project2D(tri));
+        const projectedTris = trisToProject.reduce((list, { i: index }) => {
+            const tri = this.tris[index];
+            const triNormal = this.normals[index];
+            // Lighting
+            if (!this.colors[index]) {
+                const luminance = Math.max(0.1, Vec3D.DotProduct(light, triNormal));
+                this.colors[index] = Vec3D.MultiplyConst(color, luminance);
             }
+            Object.assign(tri, { lit: this.colors[index] });
+
+            list.push(...camera.project2D(tri));
             return list;
-        },[] as Tri[]);
+        }, [] as Tri[]);
+
+        projectedTris.sort((a, b) => {
+            const z1 = (a[0].z + a[1].z + a[2].z) / 3;
+            const z2 = (b[0].z + b[1].z + b[2].z) / 3;
+            return z2 - z1;
+        });
+
+        performance.mark("clippingStart");
+
+        return projectedTris.reduce((list, tri) => {
+            list.push(...camera.frustumClip(tri));
+            return list;
+        }, [] as Tri[]);
     }
 
 }

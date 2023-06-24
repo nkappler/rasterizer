@@ -1,13 +1,13 @@
 import { Matrix4 } from "./matrix";
-import { Vec3D } from "./vector";
+import { IVec3D, Vec3D } from "./vector";
 
 export abstract class Entity {
     protected pos = new Vec3D;
     protected rot = new Vec3D;
 
-    public constructor() {}
+    public constructor() { }
 
-    public translate(vec: Vec3D) {
+    public translate(vec: IVec3D) {
         this.pos = Vec3D.Add(this.pos, vec);
         this.update();
     }

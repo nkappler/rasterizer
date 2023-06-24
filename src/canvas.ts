@@ -33,14 +33,6 @@ export namespace Canvas {
     }
 
     function NormalizedToScreenSpace(tri: Tri): Tri {
-        // const matrix = Matrix4.makeIdentity();
-        // matrix[0][0] = 0.5 * width;
-        // matrix[1][1] = 0.5 * height;
-        // matrix[3][0] = 0.5 * width;
-        // matrix[3][1] = 0.5 * height;
-        // return Tri.MultiplyMatrix(tri, matrix);
-
-        // Alternate implementation to the matrix above
         // Offset into visible normalized space
         tri = Tri.AddVector(tri, { x: 1, y: 1, z: 0 });
         // un-normalize to screen coordinates
@@ -67,7 +59,7 @@ export namespace Canvas {
 
     export function DrawDebugInfo(tris: number, projectionTime: number, clippingTime: number) {
         ctx.fillStyle = "white"
-        ctx.fillText((1000 / medianElapsed).toFixed(0) + " FPS", 10, 10);
+        ctx.fillText((1 / medianElapsed).toFixed(0) + " FPS", 10, 10);
         ctx.fillText("Tris: " + tris, 10, 25);
         ctx.fillText("Projection: " + projectionTime.toFixed(1) + "ms", 10, 40);
         ctx.fillText("Clipping: " + clippingTime.toFixed(1) + "ms", 10, 55);

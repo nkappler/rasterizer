@@ -10,8 +10,8 @@ export class Vec3D implements IVec3D {
     public static Add(v1: IVec3D, v2: IVec3D) {
         return new Vec3D(v1.x + v2.x, v1.y + v2.y, v1.z + v2.z);
     }
-    public static Subtract(v1: IVec3D, v2: IVec3D) {
-        return new Vec3D(v1.x - v2.x, v1.y - v2.y, v1.z - v2.z);
+    public static Subtract(v1: IVec3D, v2: IVec3D): IVec3D {
+        return { x: v1.x - v2.x, y: v1.y - v2.y, z: v1.z - v2.z };
     }
 
     public static Multiply(v1: IVec3D, v2: IVec3D) {
@@ -40,9 +40,9 @@ export class Vec3D implements IVec3D {
     public get normalized() {
         return Vec3D.Normalize(this);
     }
-    public static Normalize(v: IVec3D) {
+    public static Normalize(v: IVec3D): IVec3D {
         const l = Vec3D.size(v);
-        return new Vec3D(v.x / l, v.y / l, v.z / l);
+        return { x: v.x / l, y: v.y / l, z: v.z / l };
     }
 
     public get inverted() {
@@ -64,8 +64,7 @@ export class Vec3D implements IVec3D {
         return a.x * b.x + a.y * b.y + a.z * b.z;
     }
 
-    public static IntersectPlane(point: Vec3D, _normal: Vec3D, lineStart: Vec3D, lineEnd: Vec3D) {
-        const normal = _normal.normalized;
+    public static IntersectPlane(point: IVec3D, normal: IVec3D, lineStart: IVec3D, lineEnd: IVec3D) {
         const planeD = -Vec3D.DotProduct(point, normal);
         const ad = Vec3D.DotProduct(lineStart, normal);
         const bd = Vec3D.DotProduct(lineEnd, normal);
@@ -75,19 +74,19 @@ export class Vec3D implements IVec3D {
         return Vec3D.Add(lineStart, lineToIntersect);
     }
 
-    get r() { 
+    get r() {
         return this.x;
     }
 
-    get g() { 
+    get g() {
         return this.y;
     }
 
-    get b() { 
-        return this.x;
+    get b() {
+        return this.z;
     }
 
-    get a() { 
+    get a() {
         return this.w;
     }
 }
