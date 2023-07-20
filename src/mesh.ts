@@ -3,13 +3,13 @@ import { Entity } from "./entity";
 import { Tri } from "./tri";
 import { IVec3D, Vec3D } from "./vector";
 
-const light: IVec3D = new Vec3D(0.5, 0.5, -1);
-const color: IVec3D = { x: 255, y: 255, z: 255 };
+const light: IVec3D = Vec3D.make(0.5, 0.5, -1);
+const color: IVec3D = Vec3D.make(255, 255, 255);
 
 export class Mesh extends Entity {
     public normals: IVec3D[];
     public tris: Tri[];
-    public colors: Vec3D[];
+    public colors: IVec3D[];
 
     public constructor(private rawTris: Tri[]) {
         super();
@@ -21,12 +21,12 @@ export class Mesh extends Entity {
     public static async LoadFromObjFile(url: string) {
         const text = await (await fetch(url)).text();
         const lines = text.split("\n");
-        const verts: Vec3D[] = [];
+        const verts: IVec3D[] = [];
         const tris: Tri[] = [];
         lines.forEach(line => {
             if (line.startsWith("v")) {
                 const [_, x, y, z] = line.split(" ", 4).map(Number);
-                verts.push(new Vec3D(x, y, z));
+                verts.push(Vec3D.make(x, y, z));
             }
             else if (line.startsWith("f")) {
                 const [p1, p2, p3] = line.split(" ", 4).map(Number).filter(i => !isNaN(i)).map(i => verts[i - 1]);

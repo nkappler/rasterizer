@@ -1,33 +1,33 @@
 import { Entity } from "./entity";
 import { Matrix4 } from "./matrix";
 import { Tri } from "./tri";
-import { Vec3D } from "./vector";
+import { Vec3D, IVec3D } from "./vector";
 
 const matInvertY = Matrix4.makeIdentity();
 matInvertY[1][1] = -1;
-const upP = new Vec3D(0, 1, 0), upN = new Vec3D(0, -1, 0);
-const downP = new Vec3D(0, -1, 0), downN = new Vec3D(0, 1, 0);
-const leftP = new Vec3D(-1, 0, 0), leftN = new Vec3D(1, 0, 0);
-const rightP = new Vec3D(1, 0, 0), rightN = new Vec3D(-1, 0, 0);
+const upP = Vec3D.make(0, 1, 0), upN = Vec3D.make(0, -1, 0);
+const downP = Vec3D.make(0, -1, 0), downN = Vec3D.make(0, 1, 0);
+const leftP = Vec3D.make(-1, 0, 0), leftN = Vec3D.make(1, 0, 0);
+const rightP = Vec3D.make(1, 0, 0), rightN = Vec3D.make(-1, 0, 0);
 
 export class Camera extends Entity {
     private projectionMatrix!: Matrix4;
     private viewMatrix!: Matrix4;
-    private readonly nearPoint: Vec3D;
-    private readonly nearNormal = new Vec3D(0, 0, 1);
-    private readonly farPoint: Vec3D;
-    private readonly farNormal = new Vec3D(0, 0, -1);
+    private readonly nearPoint: IVec3D;
+    private readonly nearNormal = Vec3D.make(0, 0, 1);
+    private readonly farPoint: IVec3D;
+    private readonly farNormal = Vec3D.make(0, 0, -1);
 
     public constructor(
         private AspectRatio: number,
         private fov = 90,
-        public pos = new Vec3D(0, 0, 0),
+        public pos = Vec3D.make(0, 0, 0),
         clipNear = 0.1,
         clipFar = 1000
     ) {
         super();
-        this.nearPoint = new Vec3D(0, 0, clipNear);
-        this.farPoint = new Vec3D(0, 0, clipFar);
+        this.nearPoint = Vec3D.make(0, 0, clipNear);
+        this.farPoint = Vec3D.make(0, 0, clipFar);
         this.resize();
         this.update();
     }
@@ -48,7 +48,7 @@ export class Camera extends Entity {
 
     public update() {
         const target = Matrix4.MultiplyVector(this.nearNormal, this.getTransformMatrix());
-        // const up = Matrix4.MultiplyVector(new Vec3D(1,0,0), this.getTransformMatrix());
+        // const up = Matrix4.MultiplyVector(Vec3D.make(1,0,0), this.getTransformMatrix());
         // point camera at target
         const matCamera = Matrix4.PointAt(this.pos, target);
         // inverting the camera matrix yields the view matrix
@@ -71,8 +71,8 @@ export class Camera extends Entity {
                 const triProjected = Tri.MultiplyMatrix(clippedTri, this.projectionMatrix);
 
                 // normalize (frustum) the result of the matrix multiplication
-                const [w1, w2, w3] = triProjected.map((p: Vec3D) => 1 / p.w);
-                const triFrustum = Tri.MultiplyVectorAsConst(triProjected, new Vec3D(w1, w2, w3));
+                const [w1, w2, w3] = triProjected.map((p: IVec3D) => 1 / p.w);
+                const triFrustum = Tri.MultiplyVectorAsConst(triProjected, Vec3D.make(w1, w2, w3));
 
                 // fix invert axis
                 // const triInverted = Tri.MultiplyMatrix(triFrustum, matInvertY);

@@ -2,9 +2,9 @@ import { Matrix4 } from "./matrix";
 import { IVec3D, Vec3D } from "./vector";
 
 export class Tri extends Array {
-    0: Vec3D;
-    1: Vec3D;
-    2: Vec3D;
+    0: IVec3D;
+    1: IVec3D;
+    2: IVec3D;
     public length = 3 as const;
 
     public static AddVector([p1, p2, p3]: Tri, vec: IVec3D): Tri {
@@ -66,7 +66,7 @@ export class Tri extends Array {
      * 
      * returns clipped triangles otherwise
      */
-    public static ClipAgainstPlane(point: IVec3D, normal: Vec3D, tri: Tri,): Tri[] {
+    public static ClipAgainstPlane(point: IVec3D, normal: IVec3D, tri: Tri,): Tri[] {
         const lit = (tri as any).lit;
 
         // Return signed shortest distance from point to plane, plane normal must be normalised
@@ -103,7 +103,7 @@ export class Tri extends Array {
                     inside_points[0],
                     Vec3D.IntersectPlane(point, normal, inside_points[0], outside_points[0]),
                     Vec3D.IntersectPlane(point, normal, inside_points[0], outside_points[1])
-                ] as Tri, { lit/* : new Vec3D(255,0,0) */ })
+                ] as Tri, { lit/* : Vec3D.make(255,0,0) */ })
             ]
         }
 
@@ -114,12 +114,12 @@ export class Tri extends Array {
                     inside_points[0],
                     inside_points[1],
                     newPoint
-                ] as Tri, { lit/* : new Vec3D(0,255,0) */ }),
+                ] as Tri, { lit/* : Vec3D.make(0,255,0) */ }),
                 Object.assign([
                     inside_points[1],
                     newPoint,
                     Vec3D.IntersectPlane(point, normal, inside_points[1], outside_points[0])
-                ] as Tri, { lit/* : new Vec3D(0,0,255)  */ })
+                ] as Tri, { lit/* : Vec3D.make(0,0,255)  */ })
             ];
         }
         return [];

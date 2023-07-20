@@ -21,7 +21,7 @@ function setup() {
     if (mesh.tris.length === 0) {
         Mesh.LoadFromObjFile("./src/teapot.obj").then(data => {
             mesh = data
-            mesh.translate(new Vec3D(0, -2, 5));
+            mesh.translate(Vec3D.make(0, -2, 5));
         });
     }
 
@@ -43,7 +43,7 @@ function mainLoop(elapsed: number) {
     const trisToDraw = mesh.projectTris(camera);
 
     for (const tri of trisToDraw) {
-        const { r, g, b, a } = (tri as any).lit ?? new Vec3D(255, 255, 255);
+        const { x: r, y: g, z: b, w: a } = (tri as any).lit ?? Vec3D.make(255, 255, 255);
         Canvas.FillTriangle(tri, `rgba(${r}, ${g}, ${b}, ${a}`);
     }
 

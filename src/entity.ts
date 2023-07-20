@@ -2,8 +2,8 @@ import { Matrix4 } from "./matrix";
 import { IVec3D, Vec3D } from "./vector";
 
 export abstract class Entity {
-    protected pos = new Vec3D;
-    protected rot = new Vec3D;
+    protected pos = Vec3D.make();
+    protected rot = Vec3D.make();
 
     public constructor() { }
 

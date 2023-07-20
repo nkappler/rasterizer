@@ -28,8 +28,8 @@ export namespace Input {
         const rotSpeed = 2 * elapsed;
         const LookDir = camera.getHorizontalLookDirection();
         const forward = Vec3D.MultiplyConst(LookDir, transSpeed);
-        const right = Vec3D.MultiplyConst(Vec3D.CrossProduct(LookDir, new Vec3D(0, 1, 0)), transSpeed);
-        const up = Vec3D.MultiplyConst(new Vec3D(0, 1, 0), transSpeed);
+        const right = Vec3D.MultiplyConst(Vec3D.CrossProduct(LookDir, Vec3D.make(0, 1, 0)), transSpeed);
+        const up = Vec3D.MultiplyConst(Vec3D.make(0, 1, 0), transSpeed);
 
 
         if (keysPressed["KeyA"]) {

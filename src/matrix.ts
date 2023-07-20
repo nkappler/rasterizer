@@ -15,8 +15,8 @@ export class Matrix4 extends Array {
     3: Vec4;
     public length = 4 as const;
 
-    public static MultiplyVector({ x, y, z, w }: Vec3D, mat: Matrix4): Vec3D {
-        return new Vec3D(
+    public static MultiplyVector({ x, y, z, w }: IVec3D, mat: Matrix4): IVec3D {
+        return  Vec3D.make(
             x * mat[0][0] + y * mat[1][0] + z * mat[2][0] + w * mat[3][0],
             x * mat[0][1] + y * mat[1][1] + z * mat[2][1] + w * mat[3][1],
             x * mat[0][2] + y * mat[1][2] + z * mat[2][2] + w * mat[3][2],
@@ -92,7 +92,7 @@ export class Matrix4 extends Array {
         return matrix;
     }
 
-    public static PointAt(pos: IVec3D, target: IVec3D, _up: IVec3D = new Vec3D(0, 1, 0)): Matrix4 {
+    public static PointAt(pos: IVec3D, target: IVec3D, _up: IVec3D = Vec3D.make(0, 1, 0)): Matrix4 {
         const forward = Vec3D.Normalize(Vec3D.Subtract(target, pos));
         // consider pitch
         const a = Vec3D.MultiplyConst(forward, Vec3D.DotProduct(_up, forward));
@@ -109,10 +109,10 @@ export class Matrix4 extends Array {
 
     /** only for rotation/translation matrices */
     public static QuickInverse(m: Matrix4): Matrix4 {
-        const A = new Vec3D(...m[0]);
-        const B = new Vec3D(...m[1]);
-        const C = new Vec3D(...m[2]);
-        const T = new Vec3D(...m[3]);
+        const A = Vec3D.make(...m[0]);
+        const B = Vec3D.make(...m[1]);
+        const C = Vec3D.make(...m[2]);
+        const T = Vec3D.make(...m[3]);
         return [
             [A.x, B.x, C.x, 0],
             [A.y, B.y, C.y, 0],

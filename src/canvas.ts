@@ -34,9 +34,9 @@ export namespace Canvas {
 
     function NormalizedToScreenSpace(tri: Tri): Tri {
         // Offset into visible normalized space
-        tri = Tri.AddVector(tri, { x: 1, y: 1, z: 0 });
+        tri = Tri.AddVector(tri, { x: 1, y: 1, z: 0, w: 1 });
         // un-normalize to screen coordinates
-        return Tri.MultiplyVector(tri, { x: 0.5 * width, y: 0.5 * height, z: 1 })
+        return Tri.MultiplyVector(tri, { x: 0.5 * width, y: 0.5 * height, z: 1, w: 1 })
     }
 
     export function DrawTriangle(tri: Tri, color = "#ffffff", lineWidth = 1) {
