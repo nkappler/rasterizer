@@ -5,6 +5,11 @@ export interface IVec3D {
     w: number;
 }
 
+export interface IVec2D {
+    u: number;
+    v: number;
+}
+
 export abstract class Vec3D {
 
     public static make(x = 0, y = 0, z = 0, w = 1): IVec3D {

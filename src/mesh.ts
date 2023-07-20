@@ -30,7 +30,7 @@ export class Mesh extends Entity {
             }
             else if (line.startsWith("f")) {
                 const [p1, p2, p3] = line.split(" ", 4).map(Number).filter(i => !isNaN(i)).map(i => verts[i - 1]);
-                tris.push([p1, p2, p3]);
+                tris.push(new Tri(p1, p2, p3));
             }
         });
 
@@ -45,7 +45,7 @@ export class Mesh extends Entity {
     }
 
     public projectTris(camera: Camera) {
-        const visible = this.tris.map((t, i) => ({ i, d: Vec3D.DotProduct(this.normals[i], Vec3D.Normalize(Vec3D.Subtract(t[0], camera.pos))) }));
+        const visible = this.tris.map((t, i) => ({ i, d: Vec3D.DotProduct(this.normals[i], Vec3D.Normalize(Vec3D.Subtract(t.p[0], camera.pos))) }));
         const trisToProject = visible.filter(({ d }) => d < 0);
 
         const projectedTris = trisToProject.reduce((list, { i: index }) => {
@@ -63,8 +63,8 @@ export class Mesh extends Entity {
         }, [] as Tri[]);
 
         projectedTris.sort((a, b) => {
-            const z1 = (a[0].z + a[1].z + a[2].z) / 3;
-            const z2 = (b[0].z + b[1].z + b[2].z) / 3;
+            const z1 = (a.p[0].z + a.p[1].z + a.p[2].z) / 3;
+            const z2 = (b.p[0].z + b.p[1].z + b.p[2].z) / 3;
             return z2 - z1;
         });
 

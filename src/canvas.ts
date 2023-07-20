@@ -40,7 +40,7 @@ export namespace Canvas {
     }
 
     export function DrawTriangle(tri: Tri, color = "#ffffff", lineWidth = 1) {
-        const [p1, p2, p3] = NormalizedToScreenSpace(tri);
+        const [p1, p2, p3] = NormalizedToScreenSpace(tri).p;
         ctx.lineWidth = lineWidth;
         ctx.strokeStyle = color;
         ctx.beginPath();

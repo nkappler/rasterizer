@@ -71,14 +71,14 @@ export class Camera extends Entity {
                 const triProjected = Tri.MultiplyMatrix(clippedTri, this.projectionMatrix);
 
                 // normalize (frustum) the result of the matrix multiplication
-                const [w1, w2, w3] = triProjected.map((p: IVec3D) => 1 / p.w);
+                const [w1, w2, w3] = triProjected.p.map((p: IVec3D) => 1 / p.w);
                 const triFrustum = Tri.MultiplyVectorAsConst(triProjected, Vec3D.make(w1, w2, w3));
 
                 // fix invert axis
                 // const triInverted = Tri.MultiplyMatrix(triFrustum, matInvertY);
-                triFrustum[0].y *= -1;
-                triFrustum[1].y *= -1;
-                triFrustum[2].y *= -1;
+                triFrustum.p[0].y *= -1;
+                triFrustum.p[1].y *= -1;
+                triFrustum.p[2].y *= -1;
 
                 Object.assign(triFrustum, { lit });
                 return triFrustum;
