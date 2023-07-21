@@ -1,15 +1,17 @@
 import { Camera } from "./camera";
+import { Texture } from "./canvas";
 import { Entity } from "./entity";
 import { Tri } from "./tri";
-import { IVec3D, Vec3D } from "./vector";
+import { IVec3D, Vec } from "./vector";
 
-const light: IVec3D = Vec3D.make(0.5, 0.5, -1);
-const color: IVec3D = Vec3D.make(255, 255, 255);
+const light: IVec3D = Vec.make3D(0.5, 0.5, -1);
+const color: IVec3D = Vec.make3D(255, 255, 255);
 
 export class Mesh extends Entity {
     public normals: IVec3D[];
     public tris: Tri[];
     public colors: IVec3D[];
+    public texture: Texture = null as any;
 
     public constructor(private rawTris: Tri[]) {
         super();
@@ -26,7 +28,7 @@ export class Mesh extends Entity {
         lines.forEach(line => {
             if (line.startsWith("v")) {
                 const [_, x, y, z] = line.split(" ", 4).map(Number);
-                verts.push(Vec3D.make(x, y, z));
+                verts.push(Vec.make3D(x, y, z));
             }
             else if (line.startsWith("f")) {
                 const [p1, p2, p3] = line.split(" ", 4).map(Number).filter(i => !isNaN(i)).map(i => verts[i - 1]);
@@ -45,7 +47,7 @@ export class Mesh extends Entity {
     }
 
     public projectTris(camera: Camera) {
-        const visible = this.tris.map((t, i) => ({ i, d: Vec3D.DotProduct(this.normals[i], Vec3D.Normalize(Vec3D.Subtract(t.p[0], camera.pos))) }));
+        const visible = this.tris.map((t, i) => ({ i, d: Vec.DotProduct(this.normals[i], Vec.Normalize(Vec.Subtract(t.p[0], camera.pos))) }));
         const trisToProject = visible.filter(({ d }) => d < 0);
 
         const projectedTris = trisToProject.reduce((list, { i: index }) => {
@@ -53,8 +55,8 @@ export class Mesh extends Entity {
             const triNormal = this.normals[index];
             // Lighting
             if (!this.colors[index]) {
-                const luminance = Math.max(0.1, Vec3D.DotProduct(light, triNormal));
-                this.colors[index] = Vec3D.MultiplyConst(color, luminance);
+                const luminance = Math.max(0.1, Vec.DotProduct(light, triNormal));
+                this.colors[index] = Vec.MultiplyConst(color, luminance);
             }
             Object.assign(tri, { lit: this.colors[index] });
 
@@ -62,11 +64,11 @@ export class Mesh extends Entity {
             return list;
         }, [] as Tri[]);
 
-        projectedTris.sort((a, b) => {
-            const z1 = (a.p[0].z + a.p[1].z + a.p[2].z) / 3;
-            const z2 = (b.p[0].z + b.p[1].z + b.p[2].z) / 3;
-            return z2 - z1;
-        });
+        // projectedTris.sort((a, b) => {
+        //     const z1 = (a.p[0].z + a.p[1].z + a.p[2].z) / 3;
+        //     const z2 = (b.p[0].z + b.p[1].z + b.p[2].z) / 3;
+        //     return z2 - z1;
+        // });
 
         performance.mark("clippingStart");
 

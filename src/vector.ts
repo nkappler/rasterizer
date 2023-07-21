@@ -8,35 +8,44 @@ export interface IVec3D {
 export interface IVec2D {
     u: number;
     v: number;
+    w: number;
 }
 
-export abstract class Vec3D {
+export abstract class Vec {
 
-    public static make(x = 0, y = 0, z = 0, w = 1): IVec3D {
+    public static make3D(x = 0, y = 0, z = 0, w = 1): IVec3D {
         return { x, y, z, w };
     }
 
+    public static make2D(u = 0, v = 0, w = 1): IVec2D {
+        return { u, v, w };
+    }
+
     public static Add(v1: IVec3D, v2: IVec3D) {
-        return this.make(v1.x + v2.x, v1.y + v2.y, v1.z + v2.z);
+        return this.make3D(v1.x + v2.x, v1.y + v2.y, v1.z + v2.z);
     }
     public static Subtract(v1: IVec3D, v2: IVec3D): IVec3D {
-        return this.make(v1.x - v2.x, v1.y - v2.y, v1.z - v2.z);
+        return this.make3D(v1.x - v2.x, v1.y - v2.y, v1.z - v2.z);
     }
 
     public static Multiply(v1: IVec3D, v2: IVec3D) {
-        return this.make(v1.x * v2.x, v1.y * v2.y, v1.z * v2.z);
+        return this.make3D(v1.x * v2.x, v1.y * v2.y, v1.z * v2.z);
     }
 
     public static Divide(v1: IVec3D, v2: IVec3D) {
-        return this.make(v1.x / v2.x, v1.y / v2.y, v1.z / v2.z);
+        return this.make3D(v1.x / v2.x, v1.y / v2.y, v1.z / v2.z);
     }
 
     public static AddConst({ x, y, z }: IVec3D, c: number) {
-        return this.make(x + c, y + c, z + c);
+        return this.make3D(x + c, y + c, z + c);
     }
 
     public static MultiplyConst({ x, y, z }: IVec3D, c: number) {
-        return this.make(x * c, y * c, z * c);
+        return this.make3D(x * c, y * c, z * c);
+    }
+
+    public static MultiplyConst2D({ u, v }: IVec2D, c: number) {
+        return this.make2D(u * c, v * c);
     }
 
     public static size({ x, y, z }: IVec3D) {
@@ -44,16 +53,16 @@ export abstract class Vec3D {
     }
 
     public static Normalize(v: IVec3D): IVec3D {
-        const l = Vec3D.size(v);
-        return this.make(v.x / l, v.y / l, v.z / l);
+        const l = Vec.size(v);
+        return this.make3D(v.x / l, v.y / l, v.z / l);
     }
 
     public static Invert(v: IVec3D) {
-        return Vec3D.MultiplyConst(v, -1);
+        return Vec.MultiplyConst(v, -1);
     }
 
     public static CrossProduct(a: IVec3D, b: IVec3D) {
-        return this.make(
+        return this.make3D(
             a.y * b.z - a.z * b.y,
             a.z * b.x - a.x * b.z,
             a.x * b.y - a.y * b.x
@@ -65,13 +74,13 @@ export abstract class Vec3D {
     }
 
     public static IntersectPlane(point: IVec3D, normal: IVec3D, lineStart: IVec3D, lineEnd: IVec3D) {
-        const planeD = -Vec3D.DotProduct(point, normal);
-        const ad = Vec3D.DotProduct(lineStart, normal);
-        const bd = Vec3D.DotProduct(lineEnd, normal);
+        const planeD = -Vec.DotProduct(point, normal);
+        const ad = Vec.DotProduct(lineStart, normal);
+        const bd = Vec.DotProduct(lineEnd, normal);
         const t = (-planeD - ad) / (bd - ad);
-        const lineStartToEnd = Vec3D.Subtract(lineEnd, lineStart);
-        const lineToIntersect = Vec3D.MultiplyConst(lineStartToEnd, t);
-        return Vec3D.Add(lineStart, lineToIntersect);
+        const lineStartToEnd = Vec.Subtract(lineEnd, lineStart);
+        const lineToIntersect = Vec.MultiplyConst(lineStartToEnd, t);
+        return { v: Vec.Add(lineStart, lineToIntersect), t };
     }
 
 }

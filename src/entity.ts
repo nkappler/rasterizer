@@ -1,14 +1,14 @@
 import { Matrix4 } from "./matrix";
-import { IVec3D, Vec3D } from "./vector";
+import { IVec3D, Vec } from "./vector";
 
 export abstract class Entity {
-    protected pos = Vec3D.make();
-    protected rot = Vec3D.make();
+    protected pos = Vec.make3D();
+    protected rot = Vec.make3D();
 
     public constructor() { }
 
     public translate(vec: IVec3D) {
-        this.pos = Vec3D.Add(this.pos, vec);
+        this.pos = Vec.Add(this.pos, vec);
         this.update();
     }
 

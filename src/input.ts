@@ -1,5 +1,5 @@
 import { Camera } from "./camera";
-import { Vec3D } from "./vector";
+import { Vec } from "./vector";
 
 export namespace Input {
 
@@ -27,13 +27,13 @@ export namespace Input {
         const transSpeed = 8 * elapsed;
         const rotSpeed = 2 * elapsed;
         const LookDir = camera.getHorizontalLookDirection();
-        const forward = Vec3D.MultiplyConst(LookDir, transSpeed);
-        const right = Vec3D.MultiplyConst(Vec3D.CrossProduct(LookDir, Vec3D.make(0, 1, 0)), transSpeed);
-        const up = Vec3D.MultiplyConst(Vec3D.make(0, 1, 0), transSpeed);
+        const forward = Vec.MultiplyConst(LookDir, transSpeed);
+        const right = Vec.MultiplyConst(Vec.CrossProduct(LookDir, Vec.make3D(0, -1, 0)), transSpeed);
+        const up = Vec.MultiplyConst(Vec.make3D(0, 1, 0), transSpeed);
 
 
         if (keysPressed["KeyA"]) {
-            camera.translate(Vec3D.Invert(right));
+            camera.translate(Vec.Invert(right));
         }
 
         if (keysPressed["KeyD"]) {
@@ -45,7 +45,7 @@ export namespace Input {
         }
 
         if (keysPressed["KeyE"]) {
-            camera.translate(Vec3D.Invert(up));
+            camera.translate(Vec.Invert(up));
         }
 
         if (keysPressed["KeyW"]) {
@@ -53,15 +53,15 @@ export namespace Input {
         }
 
         if (keysPressed["KeyS"]) {
-            camera.translate(Vec3D.Invert(forward));
+            camera.translate(Vec.Invert(forward));
         }
 
         if (keysPressed["ArrowLeft"]) {
-            camera.rotateY(-rotSpeed);
+            camera.rotateY(rotSpeed);
         }
 
         if (keysPressed["ArrowRight"]) {
-            camera.rotateY(rotSpeed);
+            camera.rotateY(-rotSpeed);
         }
 
         if (keysPressed["ArrowUp"]) {
@@ -73,11 +73,11 @@ export namespace Input {
         }
 
         if (keysPressed["Comma"]) {
-            camera.rotateZ(-rotSpeed);
+            camera.rotateZ(rotSpeed);
         }
 
         if (keysPressed["Period"]) {
-            camera.rotateZ(rotSpeed);
+            camera.rotateZ(-rotSpeed);
         }
     }
 }

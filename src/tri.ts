@@ -1,64 +1,84 @@
 import { Matrix4 } from "./matrix";
-import { IVec3D, Vec3D } from "./vector";
+import { IVec2D, IVec3D, Vec } from "./vector";
 
 export class Tri {
     public p: [IVec3D, IVec3D, IVec3D];
+    public t: [IVec2D, IVec2D, IVec2D];
 
-    public constructor(p1 = Vec3D.make(), p2 = Vec3D.make(), p3 = Vec3D.make()) {
+    public constructor(
+        p1 = Vec.make3D(), p2 = Vec.make3D(), p3 = Vec.make3D(),
+        t1 = Vec.make2D(), t2 = Vec.make2D(), t3 = Vec.make2D(),
+    ) {
         this.p = [p1, p2, p3];
+        this.t = [t1, t2, t3];
     }
 
-    public static AddVector({ p: [p1, p2, p3] }: Tri, vec: IVec3D): Tri {
+    public static AddVector({ p: [p1, p2, p3], t }: Tri, vec: IVec3D): Tri {
         return new Tri(
-            Vec3D.Add(p1, vec),
-            Vec3D.Add(p2, vec),
-            Vec3D.Add(p3, vec),
+            Vec.Add(p1, vec),
+            Vec.Add(p2, vec),
+            Vec.Add(p3, vec),
+            ...t
         );
     }
 
-    public static AddConst({ p: [p1, p2, p3] }: Tri, c: number): Tri {
+    public static AddConst({ p: [p1, p2, p3], t }: Tri, c: number): Tri {
         return new Tri(
-            Vec3D.AddConst(p1, c),
-            Vec3D.AddConst(p2, c),
-            Vec3D.AddConst(p3, c),
+            Vec.AddConst(p1, c),
+            Vec.AddConst(p2, c),
+            Vec.AddConst(p3, c),
+            ...t
         );
     }
 
-    public static MultiplyVector({ p: [p1, p2, p3] }: Tri, vec: IVec3D): Tri {
+    public static MultiplyVector({ p: [p1, p2, p3], t }: Tri, vec: IVec3D): Tri {
         return new Tri(
-            Vec3D.Multiply(p1, vec),
-            Vec3D.Multiply(p2, vec),
-            Vec3D.Multiply(p3, vec),
+            Vec.Multiply(p1, vec),
+            Vec.Multiply(p2, vec),
+            Vec.Multiply(p3, vec),
+            ...t
         );
     }
 
-    public static MultiplyConst({ p: [p1, p2, p3] }: Tri, c: number): Tri {
+    public static MultiplyConst({ p: [p1, p2, p3], t }: Tri, c: number): Tri {
         return new Tri(
-            Vec3D.MultiplyConst(p1, c),
-            Vec3D.MultiplyConst(p2, c),
-            Vec3D.MultiplyConst(p3, c),
+            Vec.MultiplyConst(p1, c),
+            Vec.MultiplyConst(p2, c),
+            Vec.MultiplyConst(p3, c),
+            ...t
         );
     }
 
-    public static MultiplyVectorAsConst({ p: [p1, p2, p3] }: Tri, { x, y, z }: IVec3D): Tri {
+    public static MultiplyVectorAsConst({ p: [p1, p2, p3], t }: Tri, { x, y, z }: IVec3D): Tri {
         return new Tri(
-            Vec3D.MultiplyConst(p1, x),
-            Vec3D.MultiplyConst(p2, y),
-            Vec3D.MultiplyConst(p3, z),
+            Vec.MultiplyConst(p1, x),
+            Vec.MultiplyConst(p2, y),
+            Vec.MultiplyConst(p3, z),
+            ...t
+        );
+    }
+
+    public static MultiplyVectorAsCons2D({ p, t: [t1,t2,t3] }: Tri, { x, y, z }: IVec3D): Tri {
+        return new Tri(
+            ...p,
+            Vec.MultiplyConst2D(t1, x),
+            Vec.MultiplyConst2D(t2, y),
+            Vec.MultiplyConst2D(t3, z),
         );
     }
 
     public static GetNormal({ p: [p1, p2, p3] }: Tri): IVec3D {
-        const a = Vec3D.Subtract(p2, p1);
-        const b = Vec3D.Subtract(p3, p2);
-        return Vec3D.Normalize(Vec3D.CrossProduct(a, b));
+        const a = Vec.Subtract(p2, p1);
+        const b = Vec.Subtract(p3, p2);
+        return Vec.Normalize(Vec.CrossProduct(a, b));
     }
 
-    public static MultiplyMatrix({ p: [p1, p2, p3] }: Tri, mat: Matrix4): Tri {
+    public static MultiplyMatrix({ p: [p1, p2, p3], t }: Tri, mat: Matrix4): Tri {
         return new Tri(
             Matrix4.MultiplyVector(p1, mat),
             Matrix4.MultiplyVector(p2, mat),
             Matrix4.MultiplyVector(p3, mat),
+            ...t
         );
     }
 
@@ -71,24 +91,27 @@ export class Tri {
         const lit = (tri as any).lit;
 
         // Return signed shortest distance from point to plane, plane normal must be normalised
-        const dist = (p: IVec3D) => Vec3D.DotProduct(normal, p) - Vec3D.DotProduct(normal, point);
+        const dist = (p: IVec3D) => Vec.DotProduct(normal, p) - Vec.DotProduct(normal, point);
 
         // Create two temporary storage arrays to classify points either side of plane
         // If distance sign is positive, point lies on "inside" of plane
-        let inside_points: IVec3D[] = []; let insideCount = 0;
-        let outside_points: IVec3D[] = []; let outsideCount = 0;
+        let inside_points: IVec3D[] = new Array(3); let insideCount = 0;
+        let outside_points: IVec3D[] = new Array(3); let outsideCount = 0;
+        let inside_tex: IVec2D[] = new Array(3); let insideTexCount = 0;
+        let outside_tex: IVec2D[] = new Array(3); let outsideTexCount = 0;
+
 
         // Get signed distance of each point in triangle to plane
         const d0 = dist(tri.p[0]);
         const d1 = dist(tri.p[1]);
         const d2 = dist(tri.p[2]);
 
-        if (d0 >= 0) { inside_points[insideCount++] = tri.p[0]; }
-        else { outside_points[outsideCount++] = tri.p[0]; }
-        if (d1 >= 0) { inside_points[insideCount++] = tri.p[1]; }
-        else { outside_points[outsideCount++] = tri.p[1]; }
-        if (d2 >= 0) { inside_points[insideCount++] = tri.p[2]; }
-        else { outside_points[outsideCount++] = tri.p[2]; }
+        if (d0 >= 0) { inside_points[insideCount++] = tri.p[0]; inside_tex[insideTexCount++] = tri.t[0] }
+        else { outside_points[outsideCount++] = tri.p[0]; outside_tex[outsideTexCount++] = tri.t[0] }
+        if (d1 >= 0) { inside_points[insideCount++] = tri.p[1]; inside_tex[insideTexCount++] = tri.t[1] }
+        else { outside_points[outsideCount++] = tri.p[1]; outside_tex[outsideTexCount++] = tri.t[1] }
+        if (d2 >= 0) { inside_points[insideCount++] = tri.p[2]; inside_tex[insideTexCount++] = tri.t[2] }
+        else { outside_points[outsideCount++] = tri.p[2]; outside_tex[outsideTexCount++] = tri.t[2] }
 
         if (insideCount === 0) {
             return [];
@@ -99,27 +122,57 @@ export class Tri {
         }
 
         if (insideCount === 1) {
+            let t = 0;
+            const i1 = Vec.IntersectPlane(point, normal, inside_points[0], outside_points[0]), p1 = i1.v;
+            t = i1.t;
+            const t1: IVec2D = {
+                u: t * (outside_tex[0].u - inside_tex[0].u) + inside_tex[0].u,
+                v: t * (outside_tex[0].v - inside_tex[0].v) + inside_tex[0].v,
+                w: t * (outside_tex[0].w - inside_tex[0].w) + inside_tex[0].w
+            };
+
+            const i2 = Vec.IntersectPlane(point, normal, inside_points[0], outside_points[1]), p2 = i2.v;
+            t = i2.t;
+            const t2: IVec2D = {
+                u: t * (outside_tex[1].u - inside_tex[0].u) + inside_tex[0].u,
+                v: t * (outside_tex[1].v - inside_tex[0].v) + inside_tex[0].v,
+                w: t * (outside_tex[1].w - inside_tex[0].w) + inside_tex[0].w,
+            };
+
             return [
                 Object.assign(new Tri(
-                    inside_points[0],
-                    Vec3D.IntersectPlane(point, normal, inside_points[0], outside_points[0]),
-                    Vec3D.IntersectPlane(point, normal, inside_points[0], outside_points[1])
+                    inside_points[0], p1, p2,
+                    inside_tex[0], t1, t2
                 ), { lit/* : Vec3D.make(255,0,0) */ })
             ]
         }
 
         if (insideCount === 2) {
-            const newPoint = Vec3D.IntersectPlane(point, normal, inside_points[0], outside_points[0])
+            let t = 0;
+            const i1 = Vec.IntersectPlane(point, normal, inside_points[0], outside_points[0]), p1 = i1.v;
+            t = i1.t;
+            const t1: IVec2D = {
+                u: t * (outside_tex[0].u - inside_tex[0].u) + inside_tex[0].u,
+                v: t * (outside_tex[0].v - inside_tex[0].v) + inside_tex[0].v,
+                w: t * (outside_tex[0].w - inside_tex[0].w) + inside_tex[0].w,
+            };
+
+            const i2 = Vec.IntersectPlane(point, normal, inside_points[1], outside_points[0]), p2 = i2.v;
+            t = i2.t
+            const t2: IVec2D = {
+                u: t * (outside_tex[0].u - inside_tex[1].u) + inside_tex[1].u,
+                v: t * (outside_tex[0].v - inside_tex[1].v) + inside_tex[1].v,
+                w: t * (outside_tex[0].w - inside_tex[1].w) + inside_tex[1].w,
+            };
+
             return [
                 Object.assign(new Tri(
-                    inside_points[0],
-                    inside_points[1],
-                    newPoint
+                    inside_points[0], inside_points[1], p1,
+                    inside_tex[0], inside_tex[1], t1
                 ), { lit/* : Vec3D.make(0,255,0) */ }),
                 Object.assign(new Tri(
-                    inside_points[1],
-                    newPoint,
-                    Vec3D.IntersectPlane(point, normal, inside_points[1], outside_points[0])
+                    inside_points[1], p1, p2,
+                    inside_tex[1], t1, t2
                 ), { lit/* : Vec3D.make(0,0,255)  */ })
             ];
         }

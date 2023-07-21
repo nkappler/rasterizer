@@ -2,7 +2,8 @@ import { Camera } from "./camera";
 import { Canvas } from "./canvas";
 import { Input } from "./input";
 import { Mesh } from "./mesh";
-import { Vec3D } from "./vector";
+import { Tri } from "./tri";
+import { Vec } from "./vector";
 
 var mesh: Mesh = new Mesh([]);
 
@@ -18,10 +19,51 @@ document.querySelector("canvas")?.addEventListener("click", e => {
 window.addEventListener("resize", setup);
 
 function setup() {
-    if (mesh.tris.length === 0) {
-        Mesh.LoadFromObjFile("./src/teapot.obj").then(data => {
-            mesh = data
-            mesh.translate(Vec3D.make(0, -2, 5));
+    if (mesh.tris.length == 0) {
+        Promise.all([
+            Canvas.loadImage("./src/tex.jpeg"),
+            Mesh.LoadFromObjFile("./src/teapot.obj")
+        ]).then(([texture, teapot]) => {
+            // axis.translate(Vec.make3D(0,0,5))
+
+            //mesh = m;
+            mesh = new Mesh( 
+                teapot.tris.map(t => new Tri(...t.p, Vec.make2D(0, 1), Vec.make2D(0, 0), Vec.make2D(1, 0) ))
+            //     [
+
+            //     // SOUTH
+            //     new Tri(Vec.make3D(0, 0, 0), Vec.make3D(0, 1, 0), Vec.make3D(1, 1, 0), Vec.make2D(0, 1), Vec.make2D(0, 0), Vec.make2D(1, 0)),
+            //     new Tri(Vec.make3D(0, 0, 0), Vec.make3D(1, 1, 0), Vec.make3D(1, 0, 0), Vec.make2D(0, 1), Vec.make2D(1, 0), Vec.make2D(1, 1)),
+
+            //     // EAST           																			   
+            //     new Tri(Vec.make3D(1, 0, 0), Vec.make3D(1, 1, 0), Vec.make3D(1, 1, 1), Vec.make2D(0, 1), Vec.make2D(0, 0), Vec.make2D(1, 0)),
+            //     new Tri(Vec.make3D(1, 0, 0), Vec.make3D(1, 1, 1), Vec.make3D(1, 0, 1), Vec.make2D(0, 1), Vec.make2D(1, 0), Vec.make2D(1, 1)),
+
+            //     // NORTH           																			   
+            //     new Tri(Vec.make3D(1, 0, 1), Vec.make3D(1, 1, 1), Vec.make3D(0, 1, 1), Vec.make2D(0, 1), Vec.make2D(0, 0), Vec.make2D(1, 0)),
+            //     new Tri(Vec.make3D(1, 0, 1), Vec.make3D(0, 1, 1), Vec.make3D(0, 0, 1), Vec.make2D(0, 1), Vec.make2D(1, 0), Vec.make2D(1, 1)),
+
+            //     // WEST            																			   
+            //     new Tri(Vec.make3D(0, 0, 1), Vec.make3D(0, 1, 1), Vec.make3D(0, 1, 0), Vec.make2D(0, 1), Vec.make2D(0, 0), Vec.make2D(1, 0)),
+            //     new Tri(Vec.make3D(0, 0, 1), Vec.make3D(0, 1, 0), Vec.make3D(0, 0, 0), Vec.make2D(0, 1), Vec.make2D(1, 0), Vec.make2D(1, 1)),
+
+            //     // TOP             																			   
+            //     new Tri(Vec.make3D(0, 1, 0), Vec.make3D(0, 1, 1), Vec.make3D(1, 1, 1), Vec.make2D(0, 1), Vec.make2D(0, 0), Vec.make2D(1, 0)),
+            //     new Tri(Vec.make3D(0, 1, 0), Vec.make3D(1, 1, 1), Vec.make3D(1, 1, 0), Vec.make2D(0, 1), Vec.make2D(1, 0), Vec.make2D(1, 1)),
+
+            //     // BOTTOM          																			  
+            //     new Tri(Vec.make3D(1, 0, 1), Vec.make3D(0, 0, 1), Vec.make3D(0, 0, 0), Vec.make2D(0, 1), Vec.make2D(0, 0), Vec.make2D(1, 0)),
+            //     new Tri(Vec.make3D(1, 0, 1), Vec.make3D(0, 0, 0), Vec.make3D(1, 0, 0), Vec.make2D(0, 1), Vec.make2D(1, 0), Vec.make2D(1, 1)),
+
+            // ]
+            
+            );
+
+            mesh.translate(Vec.make3D(-0.5, -0.5, 14));
+
+            // mesh = new Mesh([...mesh.tris, ...axis.tris]);
+            mesh.texture = texture;
+
         });
     }
 
@@ -43,8 +85,8 @@ function mainLoop(elapsed: number) {
     const trisToDraw = mesh.projectTris(camera);
 
     for (const tri of trisToDraw) {
-        const { x: r, y: g, z: b, w: a } = (tri as any).lit ?? Vec3D.make(255, 255, 255);
-        Canvas.FillTriangle(tri, `rgba(${r}, ${g}, ${b}, ${a}`);
+        Canvas.TexturedTriangle(tri, mesh.texture);
+        // Canvas.DrawTriangle(tri);
     }
 
     Canvas.DrawDebugInfo(
