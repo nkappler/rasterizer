@@ -84,15 +84,20 @@ function mainLoop(elapsed: number) {
     //project 3D -> 2D normalized
     const trisToDraw = mesh.projectTris(camera);
 
+    performance.mark("draw");
+
     for (const tri of trisToDraw) {
         Canvas.TexturedTriangle(tri, mesh.texture);
         // Canvas.DrawTriangle(tri);
     }
 
+    Canvas.swapImageData();
+
     Canvas.DrawDebugInfo(
         trisToDraw.length,
         performance.measure("projection", "FrameStart", "clippingStart").duration,
-        performance.measure("clipping", "clippingStart").duration);
+        performance.measure("clipping", "clippingStart", "draw").duration,
+        performance.measure("clipping", "draw").duration);
 
     requestAnimationFrame(() => mainLoop(performance.measure("elapsed", "FrameStart").duration / 1000));
 }

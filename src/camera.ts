@@ -58,7 +58,6 @@ export class Camera extends Entity {
 
     /* Project a Triangle into 2D normalized space, clipping it if it exceeds the near or far plane */
     public project2D(tri: Tri,): Tri[] {
-        const lit = (tri as any).lit;
 
         //Convert World Space -> View Space
         const triViewed = Tri.MultiplyMatrix(tri, this.viewMatrix);
@@ -91,7 +90,6 @@ export class Camera extends Entity {
                 triFrustum.p[1].x *= -1;
                 triFrustum.p[2].x *= -1;
 
-                Object.assign(triFrustum, { lit });
                 return triFrustum;
             });
     }

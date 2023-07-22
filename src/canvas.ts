@@ -2,6 +2,7 @@ import { Tri } from "./tri";
 
 export interface Texture extends ImageData {
     colors: string[];
+    colorsUInt8: Uint8ClampedArray[];
 }
 
 export namespace Canvas {
@@ -10,6 +11,7 @@ export namespace Canvas {
     let ctx: CanvasRenderingContext2D;
     const frametimes = new Array(10).fill(Infinity);
     let depthBuffer: number[];
+    let imageData = new ImageData(new Uint8ClampedArray(4), 1);
     let framecount = 0;
     let medianElapsed = 16.6;
 
@@ -36,6 +38,7 @@ export namespace Canvas {
         ctx.lineWidth = 0;
         ctx.fillStyle = color;
         ctx.fillRect(0, 0, width, height);
+        imageData = ctx.getImageData(0, 0, width, height);
         depthBuffer = new Array(width * height).fill(0);
     }
 
@@ -45,12 +48,15 @@ export namespace Canvas {
             img.src = path;
             img.onload = () => {
                 ctx.drawImage(img, 0, 0);
-                const imageData = ctx.getImageData(0, 0, img.width, img.height);
+                const tex = ctx.getImageData(0, 0, img.width, img.height);
                 const colors: string[] = [];
-                for (let i = 0; i < imageData.data.length; i += 4) {
-                    colors.push(`rgba(${imageData.data.slice(i, i + 4).join(",")})`);
+                const colorsUInt8: Uint8ClampedArray[] = [];
+                for (let i = 0; i < tex.data.length; i += 4) {
+                    const color = tex.data.slice(i, i + 4)
+                    colorsUInt8.push(color);
+                    colors.push(`rgba(${color.join(",")})`);
                 }
-                res(Object.assign(imageData, { colors }));
+                res(Object.assign(tex, { colors, colorsUInt8 }));
             };
         });
     }
@@ -182,7 +188,7 @@ export namespace Canvas {
                     tex_w = (1 - t) * tex_sw + t * tex_ew;
 
                     if (tex_w > depthBuffer[i * width + j]) {
-                        DrawPixel(j, i, SampleColor(tex_u / tex_w, tex_v / tex_w, tex));
+                        DrawPixelImageData(j, i, SampleColorImageData(tex_u / tex_w, tex_v / tex_w, tex), tri.l);
                         depthBuffer[i * width + j] = tex_w;
                     }
 
@@ -238,7 +244,7 @@ export namespace Canvas {
                     tex_w = (1 - t) * tex_sw + t * tex_ew;
 
                     if (tex_w > depthBuffer[i * width + j]) {
-                        DrawPixel(j, i, SampleColor(tex_u / tex_w, tex_v / tex_w, tex));
+                        DrawPixelImageData(j, i, SampleColorImageData(tex_u / tex_w, tex_v / tex_w, tex), tri.l);
                         depthBuffer[i * width + j] = tex_w;
                     }
                     t += tstep;
@@ -249,10 +255,21 @@ export namespace Canvas {
     }
 
     function SampleColor(u: number, v: number, tex: Texture) {
-        const col = Math.floor(u * (tex.width) - 0.001);
-        const row = Math.floor(v * (tex.height) - 0.001);
+        const col = Math.floor((u + 0.0000001) * (tex.width - 0.001));
+        const row = Math.floor((v + 0.0000001) * (tex.height - 0.001));
         let i = (col + tex.width * row);
         return tex.colors[i];
+    }
+
+    function SampleColorImageData(u: number, v: number, tex: Texture) {
+        // due to rounding errors and all javascript numbers being floating point,
+        // u and v can end up being slightly below zero (e.g. -0.0000000001)
+        // by adding tiny offsets, the range is mapped to within the texture, making sure we
+        // don't try to access the colors array out of it's bounds.
+        const col = Math.floor((u + 0.0000001) * (tex.width - 0.0001));
+        const row = Math.floor((v + 0.0000001) * (tex.height - 0.0001));
+        let i = (col + tex.width * row);
+        return tex.colorsUInt8[i];
     }
 
     function DrawPixel(x: number, y: number, color: string) {
@@ -261,11 +278,24 @@ export namespace Canvas {
         ctx.fillRect(x, y, 1, 1);
     }
 
-    export function DrawDebugInfo(tris: number, projectionTime: number, clippingTime: number) {
-        ctx.fillStyle = "white"
+    function DrawPixelImageData(x: number, y: number, [r, g, b, a]: Uint8ClampedArray, luminance: number) {
+        let i = (x + width * y) * 4;
+        imageData.data[i++] = r * luminance;
+        imageData.data[i++] = g * luminance;
+        imageData.data[i++] = b * luminance;
+        imageData.data[i] = a;
+    }
+
+    export function swapImageData() {
+        ctx.putImageData(imageData, 0, 0);
+    }
+
+    export function DrawDebugInfo(tris: number, projectionTime: number, clippingTime: number, drawTime: number) {
+        ctx.fillStyle = "#888"
         ctx.fillText((1 / medianElapsed).toFixed(0) + " FPS", 10, 10);
         ctx.fillText("Tris: " + tris, 10, 25);
         ctx.fillText("Projection: " + projectionTime.toFixed(1) + "ms", 10, 40);
         ctx.fillText("Clipping: " + clippingTime.toFixed(1) + "ms", 10, 55);
+        ctx.fillText("Draw: " + drawTime.toFixed(1) + "ms", 10, 70);
     }
 }

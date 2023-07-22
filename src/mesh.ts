@@ -10,14 +10,14 @@ const color: IVec3D = Vec.make3D(255, 255, 255);
 export class Mesh extends Entity {
     public normals: IVec3D[];
     public tris: Tri[];
-    public colors: IVec3D[];
+    public luminances: number[];
     public texture: Texture = null as any;
 
     public constructor(private rawTris: Tri[]) {
         super();
         this.tris = rawTris;
         this.normals = this.tris.map(Tri.GetNormal);
-        this.colors = new Array(rawTris.length);
+        this.luminances = new Array(rawTris.length);
     }
 
     public static async LoadFromObjFile(url: string) {
@@ -43,7 +43,7 @@ export class Mesh extends Entity {
         const worldMat = super.getTransformMatrix()
         this.tris = this.rawTris.map(t => Tri.MultiplyMatrix(t, worldMat));
         this.normals = this.tris.map(Tri.GetNormal);
-        this.colors = new Array(this.rawTris.length);
+        this.luminances = new Array(this.rawTris.length);
     }
 
     public projectTris(camera: Camera) {
@@ -53,12 +53,12 @@ export class Mesh extends Entity {
         const projectedTris = trisToProject.reduce((list, { i: index }) => {
             const tri = this.tris[index];
             const triNormal = this.normals[index];
+
             // Lighting
-            if (!this.colors[index]) {
-                const luminance = Math.max(0.1, Vec.DotProduct(light, triNormal));
-                this.colors[index] = Vec.MultiplyConst(color, luminance);
+            if (!this.luminances[index]) {
+                this.luminances[index] = Math.max(0.1, Vec.DotProduct(light, triNormal));
             }
-            Object.assign(tri, { lit: this.colors[index] });
+            tri.l = this.luminances[index];
 
             list.push(...camera.project2D(tri));
             return list;
