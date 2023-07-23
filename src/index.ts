@@ -60,6 +60,8 @@ function setup() {
             );
 
             mesh.translate(Vec.make3D(-0.5, -0.5, 14));
+            mesh.rotateY(0.1);
+            mesh.rotateZ(0.3);
 
             // mesh = new Mesh([...mesh.tris, ...axis.tris]);
             mesh.texture = texture;
@@ -73,6 +75,8 @@ function setup() {
 }
 
 function mainLoop(elapsed: number) {
+
+    mesh.rotateY(elapsed * Math.PI * 0.1);
 
     performance.clearMarks();
     performance.mark("FrameStart");
@@ -88,10 +92,12 @@ function mainLoop(elapsed: number) {
 
     for (const tri of trisToDraw) {
         Canvas.TexturedTriangle(tri, mesh.texture);
-        // Canvas.DrawTriangle(tri);
     }
 
     Canvas.swapImageData();
+    
+    // wireframe
+    // trisToDraw.forEach(t => Canvas.DrawTriangle(t, "#0f0"));
 
     Canvas.DrawDebugInfo(
         trisToDraw.length,

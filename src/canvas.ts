@@ -1,4 +1,5 @@
 import { Tri } from "./tri";
+import { IVec2D, IVec3D, Vec } from "./vector";
 
 export interface Texture extends ImageData {
     colors: string[];
@@ -87,198 +88,137 @@ export namespace Canvas {
     }
 
     export function TexturedTriangle(tri: Tri, tex: Texture) {
-        const { p: [p1, p2, p3], t: [t1, t2, t3] } = NormalizedToScreenSpace(tri);
-        let { x: x1, y: y1 } = p1;
-        let { x: x2, y: y2 } = p2;
-        let { x: x3, y: y3 } = p3;
-        let { u: u1, v: v1, w: w1 } = t1;
-        let { u: u2, v: v2, w: w2 } = t2;
-        let { u: u3, v: v3, w: w3 } = t3;
+        const { p, t: [t1, t2, t3] } = NormalizedToScreenSpace(tri);
 
-        [y1, y2, y3] = [y1, y2, y3].map(Math.round);
+        // we are in cartesian space now so we should treat vertices as integer coordinates now, as we loop over them later
+        const [p1, p2, p3] = p.map(({ x, y }) => Vec.make3D(Math.round(x), Math.round(y)));
 
-        if (y2 < y1) {
-            [x1, x2] = [x2, x1];
-            [y1, y2] = [y2, y1];
-            [u1, u2] = [u2, u1];
-            [v1, v2] = [v2, v1];
-            [w1, w2] = [w2, w1];
+        // sort the points by their y value
+        if (p2.y < p1.y) {
+            Vec.swap(p1, p2);
+            Vec.swap2D(t1, t2);
         }
-        if (y3 < y1) {
-            [x1, x3] = [x3, x1];
-            [y1, y3] = [y3, y1];
-            [u1, u3] = [u3, u1];
-            [v1, v3] = [v3, v1];
-            [w1, w3] = [w3, w1];
+        if (p3.y < p1.y) {
+            Vec.swap(p3, p1);
+            Vec.swap2D(t3, t1);
         }
-        if (y3 < y2) {
-            [x2, x3] = [x3, x2];
-            [y2, y3] = [y3, y2];
-            [u2, u3] = [u3, u2];
-            [v2, v3] = [v3, v2];
-            [w2, w3] = [w3, w2];
+        if (p3.y < p2.y) {
+            Vec.swap(p3, p2);
+            Vec.swap2D(t3, t2);
         }
 
-        let dx1 = x2 - x1;
-        let dy1 = y2 - y1;
-        let du1 = u2 - u1;
-        let dv1 = v2 - v1;
-        let dw1 = w2 - w1;
+        // if y3 and y1 are the same, the triangle isn't visible, since it occupies 0 rows of pixels
+        if (p3.y == p1.y) { return; }
+        const { uvStep: uvStepRight, xStep: xStepRight } = getStep(p1, p3, t1, t3);
 
-        const dx2 = x3 - x1;
-        const dy2 = y3 - y1;
-        const du2 = u3 - u1;
-        const dv2 = v3 - v1;
-        const dw2 = w3 - w1;
+        if (p2.y != p1.y) {
+            const { uvStep: uvStepLeft, xStep: xStepLeft } = getStep(p1, p2, t1, t2);
 
-        let tex_u = 0, tex_v = 0, tex_w = 0;
-
-        let dax_step = 0, dbx_step = 0,
-            du1_step = 0, dv1_step = 0,
-            du2_step = 0, dv2_step = 0,
-            dw1_step = 0, dw2_step = 0;
-
-        if (dy1) {
-            dax_step = dx1 / Math.abs(dy1);
-            du1_step = du1 / Math.abs(dy1);
-            dv1_step = dv1 / Math.abs(dy1);
-            dw1_step = dw1 / Math.abs(dy1);
+            rasterize(p1.y, p2.y, p1.x, p1.x,
+                Vec.make3Dfrom2D(t1), Vec.make3Dfrom2D(t1),
+                xStepLeft, xStepRight,
+                uvStepLeft, uvStepRight,
+                tex, tri.l);
         }
 
-        if (dy2) {
-            dbx_step = dx2 / Math.abs(dy2);
-            du2_step = du2 / Math.abs(dy2);
-            dv2_step = dv2 / Math.abs(dy2);
-            dw2_step = dw2 / Math.abs(dy2);
+        if (p3.y != p2.y) {
+            // we need to interpolate the starting values for rightX and uvRight, since it has been already interpolated half way in the first rasterize call
+            const y1y2 = p2.y - p1.y;
+            const rightX = p1.x + xStepRight * y1y2;
+            const rightUV = Vec.Add(Vec.make3Dfrom2D(t1), Vec.MultiplyConst(uvStepRight, y1y2));
+
+            const { uvStep: uvStepLeft, xStep: xStepLeft } = getStep(p2, p3, t2, t3);
+
+            rasterize(p2.y, p3.y, p2.x, rightX,
+                Vec.make3Dfrom2D(t2), rightUV,
+                xStepLeft, xStepRight,
+                uvStepLeft, uvStepRight,
+                tex, tri.l);
         }
-
-
-        if (dy1) {
-            for (let i = y1; i <= y2; i++) {
-                let ax = Math.round(x1 + (i - y1) * dax_step);
-                let bx = Math.round(x1 + (i - y1) * dbx_step);
-
-                let tex_su = u1 + (i - y1) * du1_step;
-                let tex_sv = v1 + (i - y1) * dv1_step;
-                let tex_sw = w1 + (i - y1) * dw1_step;
-
-                let tex_eu = u1 + (i - y1) * du2_step;
-                let tex_ev = v1 + (i - y1) * dv2_step;
-                let tex_ew = w1 + (i - y1) * dw2_step;
-
-                if (ax > bx) {
-                    [ax, bx] = [bx, ax];
-                    [tex_su, tex_eu] = [tex_eu, tex_su];
-                    [tex_sv, tex_ev] = [tex_ev, tex_sv];
-                    [tex_sw, tex_ew] = [tex_ew, tex_sw];
-                }
-
-                tex_u = tex_su;
-                tex_v = tex_sv;
-                tex_w = tex_sw;
-
-                const t_step = 1 / (bx - ax);
-                let t = 0;
-
-
-                for (let j = ax; j < bx; j++) {
-
-                    tex_u = (1 - t) * tex_su + t * tex_eu;
-                    tex_v = (1 - t) * tex_sv + t * tex_ev;
-                    tex_w = (1 - t) * tex_sw + t * tex_ew;
-
-                    if (tex_w > depthBuffer[i * width + j]) {
-                        DrawPixelImageData(j, i, SampleColorImageData(tex_u / tex_w, tex_v / tex_w, tex), tri.l);
-                        depthBuffer[i * width + j] = tex_w;
-                    }
-
-                    t += t_step;
-                }
-            }
-        }
-
-        dy1 = y3 - y2;
-        dx1 = x3 - x2;
-        dv1 = v3 - v2;
-        du1 = u3 - u2;
-        dw1 = w3 - w2;
-
-        if (dy1) dax_step = dx1 / Math.abs(dy1);
-        if (dy2) dbx_step = dx2 / Math.abs(dy2);
-
-        du1_step = 0, dv1_step = 0;
-        if (dy1) du1_step = du1 / Math.abs(dy1);
-        if (dy1) dv1_step = dv1 / Math.abs(dy1);
-        if (dy1) dw1_step = dw1 / Math.abs(dy1);
-
-        if (dy1) {
-            for (let i = y2; i <= y3; i++) {
-                let ax = Math.round(x2 + (i - y2) * dax_step);
-                let bx = Math.round(x1 + (i - y1) * dbx_step);
-
-                let tex_su = u2 + (i - y2) * du1_step;
-                let tex_sv = v2 + (i - y2) * dv1_step;
-                let tex_sw = w2 + (i - y2) * dw1_step;
-
-                let tex_eu = u1 + (i - y1) * du2_step;
-                let tex_ev = v1 + (i - y1) * dv2_step;
-                let tex_ew = w1 + (i - y1) * dw2_step;
-
-                if (ax > bx) {
-                    [ax, bx] = [bx, ax];
-                    [tex_su, tex_eu] = [tex_eu, tex_su];
-                    [tex_sv, tex_ev] = [tex_ev, tex_sv];
-                    [tex_sw, tex_ew] = [tex_ew, tex_sw];
-                }
-
-                tex_u = tex_su;
-                tex_v = tex_sv;
-                tex_w = tex_sw;
-
-                const tstep = 1 / (bx - ax);
-                let t = 0;
-
-                for (let j = ax; j < bx; j++) {
-                    tex_u = (1 - t) * tex_su + t * tex_eu;
-                    tex_v = (1 - t) * tex_sv + t * tex_ev;
-                    tex_w = (1 - t) * tex_sw + t * tex_ew;
-
-                    if (tex_w > depthBuffer[i * width + j]) {
-                        DrawPixelImageData(j, i, SampleColorImageData(tex_u / tex_w, tex_v / tex_w, tex), tri.l);
-                        depthBuffer[i * width + j] = tex_w;
-                    }
-                    t += tstep;
-                }
-            }
-        }
-
     }
 
-    function SampleColor(u: number, v: number, tex: Texture) {
+    function getStep(p1: IVec3D, p2: IVec3D, t1: IVec2D, t2: IVec2D) {
+        const y1y2 = p2.y - p1.y;
+        const x1x2 = p2.x - p1.x;
+        const t1t2 = Vec.make3D(
+            t2.u - t1.u,
+            t2.v - t1.v,
+            t2.w - t1.w
+        );
+        return {
+            xStep: x1x2 / y1y2,
+            uvStep: Vec.MultiplyConst(t1t2, 1 / y1y2)
+        };
+    }
+
+    function rasterize(
+        startRow: number, endRow: number,
+        xLeft: number, xRight: number,
+        uvLeft: IVec3D, uvRight: IVec3D,
+        xStepLeft: number, xStepRight: number,
+        uvStepLeft: IVec3D, uvStepRight: IVec3D,
+        tex: Texture, luminance: number
+    ) {
+        // xLeft might be identical to xRight in the beginning but they propagate in different directions.
+        // if the left side is larger than the right side, swap the points
+        if (xLeft + xStepLeft > xRight + xStepRight) {
+            return rasterize(
+                startRow, endRow,
+                xRight, xLeft,
+                uvRight, uvLeft,
+                xStepRight, xStepLeft,
+                uvStepRight, uvStepLeft,
+                tex, luminance);
+        }
+
+        for (let i = startRow; i <= endRow; i++) {
+            const currentStep = i - startRow;
+            let startCol = Math.round(xLeft + currentStep * xStepLeft);
+            let endCol = Math.round(xRight + currentStep * xStepRight);
+
+            let tex_start = Vec.Add(uvLeft, Vec.MultiplyConst(uvStepLeft, currentStep));
+            let tex_end = Vec.Add(uvRight, Vec.MultiplyConst(uvStepRight, currentStep));
+
+            const t_step = 1 / (endCol - startCol);
+            let t = 0;
+
+            for (let j = startCol; j < endCol; j++) {
+                const { x: tex_u, y: tex_v, z: tex_w } = Vec.lerp(tex_start, tex_end, t);
+
+                if (tex_w > depthBuffer[i * width + j]) {
+                    DrawPixel(j, i, SampleColorUInt8(tex_u / tex_w, tex_v / tex_w, tex), luminance);
+                    depthBuffer[i * width + j] = tex_w;
+                }
+                t += t_step;
+            }
+        }
+    }
+
+    function SampleColorString(u: number, v: number, tex: Texture) {
         const col = Math.floor((u + 0.0000001) * (tex.width - 0.001));
         const row = Math.floor((v + 0.0000001) * (tex.height - 0.001));
         let i = (col + tex.width * row);
         return tex.colors[i];
     }
 
-    function SampleColorImageData(u: number, v: number, tex: Texture) {
+    function SampleColorUInt8(u: number, v: number, tex: Texture) {
         // due to rounding errors and all javascript numbers being floating point,
         // u and v can end up being slightly below zero (e.g. -0.0000000001)
         // by adding tiny offsets, the range is mapped to within the texture, making sure we
         // don't try to access the colors array out of it's bounds.
-        const col = Math.floor((u + 0.0000001) * (tex.width - 0.0001));
-        const row = Math.floor((v + 0.0000001) * (tex.height - 0.0001));
+        const col = Math.floor((u + 0.0000001) * (tex.width - 0.001));
+        const row = Math.floor((v + 0.0000001) * (tex.height - 0.001));
         let i = (col + tex.width * row);
         return tex.colorsUInt8[i];
     }
 
-    function DrawPixel(x: number, y: number, color: string) {
+    function DrawPixelRect(x: number, y: number, color: string) {
         ctx.fillStyle = color;
         // on firefox (and chrome I think) we need a half pixel offset to get opaque pixels, in safari we don't.
         ctx.fillRect(x, y, 1, 1);
     }
 
-    function DrawPixelImageData(x: number, y: number, [r, g, b, a]: Uint8ClampedArray, luminance: number) {
+    function DrawPixel(x: number, y: number, [r, g, b, a]: Uint8ClampedArray, luminance: number) {
         let i = (x + width * y) * 4;
         imageData.data[i++] = r * luminance;
         imageData.data[i++] = g * luminance;

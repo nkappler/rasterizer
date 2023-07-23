@@ -116,12 +116,12 @@ export class Tri {
         const d1 = dist(tri.p[1]);
         const d2 = dist(tri.p[2]);
 
-        if (d0 >= 0) { inside_points[insideCount++] = tri.p[0]; inside_tex[insideTexCount++] = tri.t[0] }
-        else { outside_points[outsideCount++] = tri.p[0]; outside_tex[outsideTexCount++] = tri.t[0] }
-        if (d1 >= 0) { inside_points[insideCount++] = tri.p[1]; inside_tex[insideTexCount++] = tri.t[1] }
-        else { outside_points[outsideCount++] = tri.p[1]; outside_tex[outsideTexCount++] = tri.t[1] }
-        if (d2 >= 0) { inside_points[insideCount++] = tri.p[2]; inside_tex[insideTexCount++] = tri.t[2] }
-        else { outside_points[outsideCount++] = tri.p[2]; outside_tex[outsideTexCount++] = tri.t[2] }
+        if (d0 >= 0) { inside_points[insideCount++] = tri.p[0]; inside_tex[insideTexCount++] = Object.assign({}, tri.t[0]) }
+        else { outside_points[outsideCount++] = tri.p[0]; outside_tex[outsideTexCount++] = Object.assign({}, tri.t[0]) }
+        if (d1 >= 0) { inside_points[insideCount++] = tri.p[1]; inside_tex[insideTexCount++] = Object.assign({}, tri.t[1]) }
+        else { outside_points[outsideCount++] = tri.p[1]; outside_tex[outsideTexCount++] = Object.assign({}, tri.t[1]) }
+        if (d2 >= 0) { inside_points[insideCount++] = tri.p[2]; inside_tex[insideTexCount++] = Object.assign({}, tri.t[2]) }
+        else { outside_points[outsideCount++] = tri.p[2]; outside_tex[outsideTexCount++] = Object.assign({}, tri.t[2]) }
 
         if (insideCount === 0) {
             return [];
@@ -132,22 +132,11 @@ export class Tri {
         }
 
         if (insideCount === 1) {
-            let t = 0;
             const i1 = Vec.IntersectPlane(point, normal, inside_points[0], outside_points[0]), p1 = i1.v;
-            t = i1.t;
-            const t1: IVec2D = {
-                u: t * (outside_tex[0].u - inside_tex[0].u) + inside_tex[0].u,
-                v: t * (outside_tex[0].v - inside_tex[0].v) + inside_tex[0].v,
-                w: t * (outside_tex[0].w - inside_tex[0].w) + inside_tex[0].w
-            };
+            const t1 = Vec.lerp2D(inside_tex[0], outside_tex[0], i1.t);
 
             const i2 = Vec.IntersectPlane(point, normal, inside_points[0], outside_points[1]), p2 = i2.v;
-            t = i2.t;
-            const t2: IVec2D = {
-                u: t * (outside_tex[1].u - inside_tex[0].u) + inside_tex[0].u,
-                v: t * (outside_tex[1].v - inside_tex[0].v) + inside_tex[0].v,
-                w: t * (outside_tex[1].w - inside_tex[0].w) + inside_tex[0].w,
-            };
+            const t2 = Vec.lerp2D(inside_tex[0], outside_tex[1], i2.t);
 
             return [new Tri(
                 inside_points[0], p1, p2,
@@ -157,22 +146,11 @@ export class Tri {
         }
 
         if (insideCount === 2) {
-            let t = 0;
             const i1 = Vec.IntersectPlane(point, normal, inside_points[0], outside_points[0]), p1 = i1.v;
-            t = i1.t;
-            const t1: IVec2D = {
-                u: t * (outside_tex[0].u - inside_tex[0].u) + inside_tex[0].u,
-                v: t * (outside_tex[0].v - inside_tex[0].v) + inside_tex[0].v,
-                w: t * (outside_tex[0].w - inside_tex[0].w) + inside_tex[0].w,
-            };
+            const t1 = Vec.lerp2D(inside_tex[0], outside_tex[0], i1.t);
 
             const i2 = Vec.IntersectPlane(point, normal, inside_points[1], outside_points[0]), p2 = i2.v;
-            t = i2.t
-            const t2: IVec2D = {
-                u: t * (outside_tex[0].u - inside_tex[1].u) + inside_tex[1].u,
-                v: t * (outside_tex[0].v - inside_tex[1].v) + inside_tex[1].v,
-                w: t * (outside_tex[0].w - inside_tex[1].w) + inside_tex[1].w,
-            };
+            const t2 = Vec.lerp2D(inside_tex[1], outside_tex[0], i2.t);
 
             return [
                 new Tri(
@@ -180,9 +158,11 @@ export class Tri {
                     inside_tex[0], inside_tex[1], t1,
                     tri.l
                 ),
+                // somewhere in the rasterizer code, a property is modified so we nee to make a copy of the shared uv vertices.
+                // this is a bug and should be fixed
                 new Tri(
                     inside_points[1], p1, p2,
-                    inside_tex[1], t1, t2,
+                    {...inside_tex[1]}, {...t1}, t2,
                     tri.l
                 )
             ];

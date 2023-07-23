@@ -83,4 +83,37 @@ export abstract class Vec {
         return { v: Vec.Add(lineStart, lineToIntersect), t };
     }
 
+    /** linear interpolation */
+    public static lerp(start: IVec3D, end: IVec3D, t: number) {
+        return Vec.Add(Vec.MultiplyConst(start, 1 - t), Vec.MultiplyConst(end, t));
+    }
+    /** linear interpolation */
+    public static lerp2D(start: IVec2D, end: IVec2D, t: number) {
+        // yikes
+        return Vec.make2Dfrom3D(Vec.Add(Vec.MultiplyConst(Vec.make3Dfrom2D(start), 1 - t), Vec.MultiplyConst(Vec.make3Dfrom2D(end), t)));
+    }
+
+    public static swap(a: IVec3D, b: IVec3D) {
+        let tmp;
+        tmp = a.x; a.x = b.x; b.x = tmp;
+        tmp = a.y; a.y = b.y; b.y = tmp;
+        tmp = a.z; a.z = b.z; b.z = tmp;
+        tmp = a.w; a.w = b.w; b.w = tmp;
+    }
+
+    public static swap2D(a: IVec2D, b: IVec2D) {
+        let tmp;
+        tmp = a.u; a.u = b.u; b.u = tmp;
+        tmp = a.v; a.v = b.v; b.v = tmp;
+        tmp = a.w; a.w = b.w; b.w = tmp;
+    }
+
+    public static make3Dfrom2D({ u, v, w }: IVec2D) {
+        return Vec.make3D(u, v, w);
+    }
+
+    public static make2Dfrom3D({ x, y, z }: IVec3D) {
+        return Vec.make2D(x, y, z);
+    }
+
 }
