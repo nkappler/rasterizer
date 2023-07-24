@@ -11,14 +11,15 @@ export namespace Canvas {
     let height: number;
     let ctx: CanvasRenderingContext2D;
     const frametimes = new Array(10).fill(Infinity);
-    let depthBuffer: number[];
+    let depthBuffer: number[] = [];
     let imageData = new ImageData(new Uint8ClampedArray(4), 1);
     let framecount = 0;
     let medianElapsed = 16.6;
     let emptyImageData = new ImageData(new Uint8ClampedArray(4), 1);
     let emptyDepthBuffer: number[] = [];
+    let backgroundColor: string;
 
-    export function SetupCanvas(backgroundColor = "#112244") {
+    export function SetupCanvas(_backgroundColor = "#112244") {
         const canvas = document.querySelector("canvas");
         if (!canvas) throw "canvas not found";
         const _ctx = canvas.getContext("2d");
@@ -29,8 +30,8 @@ export namespace Canvas {
         canvas.setAttribute("width", width + "px");
         canvas.setAttribute("height", height + "px");
 
-        ctx.clearRect(0, 0, width, height);
         ctx.lineWidth = 0;
+        backgroundColor = _backgroundColor;
         ctx.fillStyle = backgroundColor;
         ctx.fillRect(0, 0, width, height);
         emptyImageData = ctx.getImageData(0, 0, width, height);
@@ -45,6 +46,9 @@ export namespace Canvas {
         frametimes[framecount % frametimes.length] = elapsed;
         medianElapsed = frametimes.reduce((a, b) => a + b) / frametimes.length;
 
+        ctx.lineWidth = 0;
+        ctx.fillStyle = backgroundColor;
+        ctx.fillRect(0, 0, width, height);
         imageData = new ImageData(emptyImageData.data.slice(), width);
         depthBuffer = emptyDepthBuffer.slice();
     }

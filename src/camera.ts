@@ -54,6 +54,11 @@ export class Camera extends Entity {
         this.viewMatrix = Matrix4.QuickInverse(matCamera);
     }
 
+    public backFaceCulling(tris: Tri[], normals: IVec3D[]) {
+        const visible = tris.map((t, i) => ({ i, d: Vec.DotProduct(normals[i], Vec.Normalize(Vec.Subtract(t.p[0], this.pos))) }));
+        return visible.filter(({ d }) => d < 0);
+    }
+
     /* Project a Triangle into 2D normalized space, clipping it if it exceeds the near or far plane */
     public project2D(tri: Tri,): Tri[] {
 

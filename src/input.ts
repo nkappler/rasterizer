@@ -1,9 +1,12 @@
 import { Camera } from "./camera";
+import { RenderPipeline } from "./pipeline";
 import { Vec } from "./vector";
 
 export namespace Input {
-    let camera: Camera
-    const keysPressed: Record<KeyboardEvent["code"], boolean> = {};
+    let camera: Camera;
+    let pipeline: RenderPipeline;
+    const keyDown: Record<KeyboardEvent["code"], boolean> = {};
+    let keyPressed: Record<KeyboardEvent["code"], boolean> = {};
 
     const mousemove = (e: MouseEvent) => {
         if (document.pointerLockElement === null) return;
@@ -13,13 +16,15 @@ export namespace Input {
     };
     const click = (e: MouseEvent) => (e.target as HTMLCanvasElement).requestPointerLock();
     const keydown = (e: KeyboardEvent) => {
-        keysPressed[e.code] = true;
+        keyDown[e.code] = true;
+        keyPressed[e.code] = true;
         e.preventDefault();
     }
-    const keyup = (e: KeyboardEvent) => keysPressed[e.code] = false;
+    const keyup = (e: KeyboardEvent) => keyDown[e.code] = false;
 
-    export function setup(_camera: Camera) {
+    export function setup(_camera: Camera, _pipeline: RenderPipeline) {
         camera = _camera;
+        pipeline = _pipeline;
 
         document.querySelector("canvas")?.removeEventListener("click", click);
         document.querySelector("canvas")?.addEventListener("click", click);
@@ -42,53 +47,62 @@ export namespace Input {
         const right = Vec.MultiplyConst(Vec.CrossProduct(LookDir, Vec.make3D(0, -1, 0)), transSpeed);
         const up = Vec.MultiplyConst(Vec.make3D(0, 1, 0), transSpeed);
 
-
-        if (keysPressed["KeyA"]) {
+        if (keyDown["KeyA"]) {
             camera.translate(Vec.Invert(right));
         }
 
-        if (keysPressed["KeyD"]) {
+        if (keyDown["KeyD"]) {
             camera.translate(right);
         }
 
-        if (keysPressed["KeyQ"]) {
+        if (keyDown["KeyQ"]) {
             camera.translate(up);
         }
 
-        if (keysPressed["KeyE"]) {
+        if (keyDown["KeyE"]) {
             camera.translate(Vec.Invert(up));
         }
 
-        if (keysPressed["KeyW"]) {
+        if (keyDown["KeyW"]) {
             camera.translate(forward);
         }
 
-        if (keysPressed["KeyS"]) {
+        if (keyDown["KeyS"]) {
             camera.translate(Vec.Invert(forward));
         }
 
-        if (keysPressed["ArrowLeft"]) {
+        if (keyDown["ArrowLeft"]) {
             camera.rotateY(rotSpeed);
         }
 
-        if (keysPressed["ArrowRight"]) {
+        if (keyDown["ArrowRight"]) {
             camera.rotateY(-rotSpeed);
         }
 
-        if (keysPressed["ArrowUp"]) {
+        if (keyDown["ArrowUp"]) {
             camera.rotateX(-rotSpeed);
         }
 
-        if (keysPressed["ArrowDown"]) {
+        if (keyDown["ArrowDown"]) {
             camera.rotateX(rotSpeed);
         }
 
-        if (keysPressed["Comma"]) {
+        if (keyDown["Comma"]) {
             camera.rotateZ(rotSpeed);
         }
 
-        if (keysPressed["Period"]) {
+        if (keyDown["Period"]) {
             camera.rotateZ(-rotSpeed);
         }
+
+        if (keyPressed["KeyX"]) {
+            pipeline.toggleWireFrame();
+        }
+
+        if (keyPressed["KeyT"]) {
+            pipeline.toggleTexture();
+        }
+
+        keyPressed = {};
     }
 }

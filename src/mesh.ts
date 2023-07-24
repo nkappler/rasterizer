@@ -4,7 +4,7 @@ import { Entity } from "./entity";
 import { Tri } from "./tri";
 import { IVec3D, Vec } from "./vector";
 
-const light: IVec3D = Vec.make3D(0.5, 0.5, -1);
+const light: IVec3D = Vec.Normalize(Vec.make3D(0.5, 0.5, -1));
 const color: IVec3D = Vec.make3D(255, 255, 255);
 
 export class Mesh extends Entity {
@@ -47,10 +47,7 @@ export class Mesh extends Entity {
     }
 
     public projectTris(camera: Camera) {
-        const visible = this.tris.map((t, i) => ({ i, d: Vec.DotProduct(this.normals[i], Vec.Normalize(Vec.Subtract(t.p[0], camera.pos))) }));
-        const trisToProject = visible.filter(({ d }) => d < 0);
-
-        const projectedTris = trisToProject.reduce((list, { i: index }) => {
+        const projectedTris = camera.backFaceCulling(this.tris, this.normals).reduce((list, { i: index }) => {
             const tri = this.tris[index];
             const triNormal = this.normals[index];
 
