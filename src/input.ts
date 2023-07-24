@@ -2,25 +2,36 @@ import { Camera } from "./camera";
 import { Vec } from "./vector";
 
 export namespace Input {
-
+    let camera: Camera
     const keysPressed: Record<KeyboardEvent["code"], boolean> = {};
 
-    export function setup(camera: Camera) {
-        window.addEventListener("keydown", e => {
-            keysPressed[e.code] = true;
-            e.preventDefault();
-        });
+    const mousemove = (e: MouseEvent) => {
+        if (document.pointerLockElement === null) return;
 
-        window.addEventListener("keyup", e => {
-            keysPressed[e.code] = false;
-        });
+        camera.rotateY(-e.movementX * 0.001);
+        camera.rotateX(e.movementY * 0.001);
+    };
+    const click = (e: MouseEvent) => (e.target as HTMLCanvasElement).requestPointerLock();
+    const keydown = (e: KeyboardEvent) => {
+        keysPressed[e.code] = true;
+        e.preventDefault();
+    }
+    const keyup = (e: KeyboardEvent) => keysPressed[e.code] = false;
 
-        window.addEventListener("mousemove", e => {
-            if (document.pointerLockElement === null) return;
+    export function setup(_camera: Camera) {
+        camera = _camera;
 
-            camera.rotateY(-e.movementX * 0.001);
-            camera.rotateX(e.movementY * 0.001);
-        });
+        document.querySelector("canvas")?.removeEventListener("click", click);
+        document.querySelector("canvas")?.addEventListener("click", click);
+
+        window.removeEventListener("keydown", keydown);
+        window.addEventListener("keydown", keydown);
+
+        window.removeEventListener("keyup", keyup);
+        window.addEventListener("keyup", keyup);
+
+        window.removeEventListener("mousemove", mousemove);
+        window.addEventListener("mousemove", mousemove);
     }
 
     export function update(camera: Camera, elapsed: number) {

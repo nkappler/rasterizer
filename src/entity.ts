@@ -2,10 +2,8 @@ import { Matrix4 } from "./matrix";
 import { IVec3D, Vec } from "./vector";
 
 export abstract class Entity {
-    protected pos = Vec.make3D();
-    protected rot = Vec.make3D();
 
-    public constructor() { }
+    public constructor(protected pos = Vec.make3D(), protected rot = Vec.make3D()) { }
 
     public translate(vec: IVec3D) {
         this.pos = Vec.Add(this.pos, vec);

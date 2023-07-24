@@ -20,10 +20,11 @@ export class Camera extends Entity {
         private AspectRatio: number,
         private fov = 90,
         public pos = Vec.make3D(0, 0, 0),
+        public rot = Vec.make3D(0, 0, 0),
         clipNear = 0.1,
         clipFar = 1000
     ) {
-        super();
+        super(pos, rot);
         this.nearPoint = Vec.make3D(0, 0, clipNear);
         this.farPoint = Vec.make3D(0, 0, clipFar);
         this.resize();

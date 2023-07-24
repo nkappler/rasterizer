@@ -7,14 +7,10 @@ import { Vec } from "./vector";
 
 var mesh: Mesh = new Mesh([]);
 
-let camera: Camera;
+let camera: Camera = new Camera(1);
 
 setup();
 mainLoop(0);
-
-document.querySelector("canvas")?.addEventListener("click", e => {
-    (e.target as HTMLCanvasElement).requestPointerLock();
-})
 
 window.addEventListener("resize", setup);
 
@@ -39,7 +35,7 @@ function setup() {
     }
 
     const AspectRatio = Canvas.SetupCanvas();
-    camera = new Camera(AspectRatio);
+    camera = new Camera(AspectRatio, undefined, camera.pos, camera.rot);
     Input.setup(camera);
 }
 
@@ -53,7 +49,6 @@ function mainLoop(elapsed: number) {
     Input.update(camera, elapsed);
     Canvas.clear(elapsed);
 
-    // mesh.rotateY(elapsed);
     //project 3D -> 2D normalized
     const projectedTris = mesh.projectTris(camera);
 
