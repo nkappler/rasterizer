@@ -15,8 +15,10 @@ export namespace Canvas {
     let imageData = new ImageData(new Uint8ClampedArray(4), 1);
     let framecount = 0;
     let medianElapsed = 16.6;
+    let emptyImageData = new ImageData(new Uint8ClampedArray(4), 1);
+    let emptyDepthBuffer: number[] = [];
 
-    export function SetupCanvas() {
+    export function SetupCanvas(backgroundColor = "#112244") {
         const canvas = document.querySelector("canvas");
         if (!canvas) throw "canvas not found";
         const _ctx = canvas.getContext("2d");
@@ -26,21 +28,25 @@ export namespace Canvas {
         height = canvas.getBoundingClientRect().height;
         canvas.setAttribute("width", width + "px");
         canvas.setAttribute("height", height + "px");
+
+        ctx.clearRect(0, 0, width, height);
+        ctx.lineWidth = 0;
+        ctx.fillStyle = backgroundColor;
+        ctx.fillRect(0, 0, width, height);
+        emptyImageData = ctx.getImageData(0, 0, width, height);
+        emptyDepthBuffer = new Array(width * height).fill(0);
+
         const AspectRatio = height / width;
         return AspectRatio;
     }
 
-    export function clear(elapsed: number, color = "#112244") {
+    export function clear(elapsed: number) {
         framecount++;
         frametimes[framecount % frametimes.length] = elapsed;
         medianElapsed = frametimes.reduce((a, b) => a + b) / frametimes.length;
 
-        ctx.clearRect(0, 0, width, height);
-        ctx.lineWidth = 0;
-        ctx.fillStyle = color;
-        ctx.fillRect(0, 0, width, height);
-        imageData = ctx.getImageData(0, 0, width, height);
-        depthBuffer = new Array(width * height).fill(0);
+        imageData = new ImageData(emptyImageData.data.slice(), width);
+        depthBuffer = emptyDepthBuffer.slice();
     }
 
     export async function loadImage(path: string) {
@@ -158,7 +164,10 @@ export namespace Canvas {
         xStepLeft: number, xStepRight: number,
         uvStepLeft: IVec3D, uvStepRight: IVec3D,
         tex: Texture, luminance: number
-    ) {
+    ): void {
+        // get a reference to the texture width and height instead of aquiring it for each pixel of the tri 
+        const { width: texWidth, height: texHeight } = tex;
+
         // xLeft might be identical to xRight in the beginning but they propagate in different directions.
         // if the left side is larger than the right side, swap the points
         if (xLeft + xStepLeft > xRight + xStepRight) {
@@ -173,11 +182,11 @@ export namespace Canvas {
 
         for (let i = startRow; i <= endRow; i++) {
             const currentStep = i - startRow;
-            let startCol = Math.round(xLeft + currentStep * xStepLeft);
-            let endCol = Math.round(xRight + currentStep * xStepRight);
+            const startCol = Math.round(xLeft + currentStep * xStepLeft);
+            const endCol = Math.round(xRight + currentStep * xStepRight);
 
-            let tex_start = Vec.Add(uvLeft, Vec.MultiplyConst(uvStepLeft, currentStep));
-            let tex_end = Vec.Add(uvRight, Vec.MultiplyConst(uvStepRight, currentStep));
+            const tex_start = Vec.Add(uvLeft, Vec.MultiplyConst(uvStepLeft, currentStep));
+            const tex_end = Vec.Add(uvRight, Vec.MultiplyConst(uvStepRight, currentStep));
 
             const t_step = 1 / (endCol - startCol);
             let t = 0;
@@ -186,7 +195,7 @@ export namespace Canvas {
                 const { x: tex_u, y: tex_v, z: tex_w } = Vec.lerp(tex_start, tex_end, t);
 
                 if (tex_w > depthBuffer[i * width + j]) {
-                    DrawPixel(j, i, SampleColorUInt8(tex_u / tex_w, tex_v / tex_w, tex), luminance);
+                    DrawPixel(j, i, SampleColorUInt8(tex_u / tex_w, tex_v / tex_w, tex, texWidth, texHeight), luminance);
                     depthBuffer[i * width + j] = tex_w;
                 }
                 t += t_step;
@@ -194,22 +203,20 @@ export namespace Canvas {
         }
     }
 
-    function SampleColorString(u: number, v: number, tex: Texture) {
-        const col = Math.floor((u + 0.0000001) * (tex.width - 0.001));
-        const row = Math.floor((v + 0.0000001) * (tex.height - 0.001));
-        let i = (col + tex.width * row);
-        return tex.colors[i];
+    function SampleColorString(u: number, v: number, tex: Texture, width: number, height: number) {
+        const col = Math.floor((u + 0.0000001) * (width - 0.001));
+        const row = Math.floor((v + 0.0000001) * (height - 0.001));
+        return tex.colors[col + width * row];
     }
 
-    function SampleColorUInt8(u: number, v: number, tex: Texture) {
+    function SampleColorUInt8(u: number, v: number, tex: Texture, width: number, height: number) {
         // due to rounding errors and all javascript numbers being floating point,
         // u and v can end up being slightly below zero (e.g. -0.0000000001)
         // by adding tiny offsets, the range is mapped to within the texture, making sure we
         // don't try to access the colors array out of it's bounds.
-        const col = Math.floor((u + 0.0000001) * (tex.width - 0.001));
-        const row = Math.floor((v + 0.0000001) * (tex.height - 0.001));
-        let i = (col + tex.width * row);
-        return tex.colorsUInt8[i];
+        const col = Math.floor((u + 0.0000001) * (width - 0.001));
+        const row = Math.floor((v + 0.0000001) * (height - 0.001));
+        return tex.colorsUInt8[col + width * row];
     }
 
     function DrawPixelRect(x: number, y: number, color: string) {
