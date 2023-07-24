@@ -18,7 +18,7 @@ export namespace Input {
         window.addEventListener("mousemove", e => {
             if (document.pointerLockElement === null) return;
 
-            camera.rotateY(e.movementX * 0.001);
+            camera.rotateY(-e.movementX * 0.001);
             camera.rotateX(e.movementY * 0.001);
         });
     }
