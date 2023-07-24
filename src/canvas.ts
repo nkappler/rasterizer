@@ -203,12 +203,6 @@ export namespace Canvas {
         }
     }
 
-    function SampleColorString(u: number, v: number, tex: Texture, width: number, height: number) {
-        const col = Math.floor((u + 0.0000001) * (width - 0.001));
-        const row = Math.floor((v + 0.0000001) * (height - 0.001));
-        return tex.colors[col + width * row];
-    }
-
     function SampleColorUInt8(u: number, v: number, tex: Texture, width: number, height: number) {
         // due to rounding errors and all javascript numbers being floating point,
         // u and v can end up being slightly below zero (e.g. -0.0000000001)
@@ -217,12 +211,6 @@ export namespace Canvas {
         const col = Math.floor((u + 0.0000001) * (width - 0.001));
         const row = Math.floor((v + 0.0000001) * (height - 0.001));
         return tex.colorsUInt8[col + width * row];
-    }
-
-    function DrawPixelRect(x: number, y: number, color: string) {
-        ctx.fillStyle = color;
-        // on firefox (and chrome I think) we need a half pixel offset to get opaque pixels, in safari we don't.
-        ctx.fillRect(x, y, 1, 1);
     }
 
     function DrawPixel(x: number, y: number, [r, g, b, a]: Uint8ClampedArray, luminance: number) {

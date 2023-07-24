@@ -23,7 +23,6 @@ export class Tri {
             Vec.Add(p3, vec),
             ...t,
             l
-
         );
     }
 
@@ -94,13 +93,10 @@ export class Tri {
     }
 
     /**
-     * returns false if the triangle should be clipped entirely
-     * 
-     * returns clipped triangles otherwise
+     * returns clipped triangles, might return the original triangle or no triangle
      */
     public static ClipAgainstPlane(point: IVec3D, normal: IVec3D, tri: Tri,): Tri[] {
-
-        // Return signed shortest distance from point to plane, plane normal must be normalised
+        // Get signed shortest distance from point to plane, plane normal must be normalised
         const dist = (p: IVec3D) => Vec.DotProduct(normal, p) - Vec.DotProduct(normal, point);
 
         // Create two temporary storage arrays to classify points either side of plane
@@ -162,7 +158,7 @@ export class Tri {
                 // this is a bug and should be fixed
                 new Tri(
                     inside_points[1], p1, p2,
-                    {...inside_tex[1]}, {...t1}, t2,
+                    { ...inside_tex[1] }, { ...t1 }, t2,
                     tri.l
                 )
             ];

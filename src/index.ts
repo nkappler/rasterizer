@@ -24,48 +24,17 @@ function setup() {
             Canvas.loadImage("./src/tex.jpeg"),
             Mesh.LoadFromObjFile("./src/teapot.obj")
         ]).then(([texture, teapot]) => {
-            // axis.translate(Vec.make3D(0,0,5))
 
             //mesh = m;
-            mesh = new Mesh( 
-                teapot.tris.map(t => new Tri(...t.p, Vec.make2D(0, 1), Vec.make2D(0, 0), Vec.make2D(1, 0) ))
-            //     [
-
-            //     // SOUTH
-            //     new Tri(Vec.make3D(0, 0, 0), Vec.make3D(0, 1, 0), Vec.make3D(1, 1, 0), Vec.make2D(0, 1), Vec.make2D(0, 0), Vec.make2D(1, 0)),
-            //     new Tri(Vec.make3D(0, 0, 0), Vec.make3D(1, 1, 0), Vec.make3D(1, 0, 0), Vec.make2D(0, 1), Vec.make2D(1, 0), Vec.make2D(1, 1)),
-
-            //     // EAST           																			   
-            //     new Tri(Vec.make3D(1, 0, 0), Vec.make3D(1, 1, 0), Vec.make3D(1, 1, 1), Vec.make2D(0, 1), Vec.make2D(0, 0), Vec.make2D(1, 0)),
-            //     new Tri(Vec.make3D(1, 0, 0), Vec.make3D(1, 1, 1), Vec.make3D(1, 0, 1), Vec.make2D(0, 1), Vec.make2D(1, 0), Vec.make2D(1, 1)),
-
-            //     // NORTH           																			   
-            //     new Tri(Vec.make3D(1, 0, 1), Vec.make3D(1, 1, 1), Vec.make3D(0, 1, 1), Vec.make2D(0, 1), Vec.make2D(0, 0), Vec.make2D(1, 0)),
-            //     new Tri(Vec.make3D(1, 0, 1), Vec.make3D(0, 1, 1), Vec.make3D(0, 0, 1), Vec.make2D(0, 1), Vec.make2D(1, 0), Vec.make2D(1, 1)),
-
-            //     // WEST            																			   
-            //     new Tri(Vec.make3D(0, 0, 1), Vec.make3D(0, 1, 1), Vec.make3D(0, 1, 0), Vec.make2D(0, 1), Vec.make2D(0, 0), Vec.make2D(1, 0)),
-            //     new Tri(Vec.make3D(0, 0, 1), Vec.make3D(0, 1, 0), Vec.make3D(0, 0, 0), Vec.make2D(0, 1), Vec.make2D(1, 0), Vec.make2D(1, 1)),
-
-            //     // TOP             																			   
-            //     new Tri(Vec.make3D(0, 1, 0), Vec.make3D(0, 1, 1), Vec.make3D(1, 1, 1), Vec.make2D(0, 1), Vec.make2D(0, 0), Vec.make2D(1, 0)),
-            //     new Tri(Vec.make3D(0, 1, 0), Vec.make3D(1, 1, 1), Vec.make3D(1, 1, 0), Vec.make2D(0, 1), Vec.make2D(1, 0), Vec.make2D(1, 1)),
-
-            //     // BOTTOM          																			  
-            //     new Tri(Vec.make3D(1, 0, 1), Vec.make3D(0, 0, 1), Vec.make3D(0, 0, 0), Vec.make2D(0, 1), Vec.make2D(0, 0), Vec.make2D(1, 0)),
-            //     new Tri(Vec.make3D(1, 0, 1), Vec.make3D(0, 0, 0), Vec.make3D(1, 0, 0), Vec.make2D(0, 1), Vec.make2D(1, 0), Vec.make2D(1, 1)),
-
-            // ]
-            
+            mesh = new Mesh(
+                teapot.tris.map(t => new Tri(...t.p, Vec.make2D(0, 1), Vec.make2D(0, 0), Vec.make2D(1, 0)))
             );
 
             mesh.translate(Vec.make3D(-0.5, -0.5, 14));
             mesh.rotateY(0.1);
             mesh.rotateZ(0.3);
 
-            // mesh = new Mesh([...mesh.tris, ...axis.tris]);
             mesh.texture = texture;
-
         });
     }
 
@@ -86,7 +55,14 @@ function mainLoop(elapsed: number) {
 
     // mesh.rotateY(elapsed);
     //project 3D -> 2D normalized
-    const trisToDraw = mesh.projectTris(camera);
+    const projectedTris = mesh.projectTris(camera);
+
+    performance.mark("clippingStart");
+
+    const trisToDraw = projectedTris.reduce((list, tri) => {
+        list.push(...camera.frustumClip(tri));
+        return list;
+    }, [] as Tri[]);
 
     performance.mark("draw");
 
@@ -95,7 +71,7 @@ function mainLoop(elapsed: number) {
     }
 
     Canvas.swapImageData();
-    
+
     // wireframe
     // trisToDraw.forEach(t => Canvas.DrawTriangle(t, "#0f0"));
 

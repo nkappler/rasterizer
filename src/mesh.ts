@@ -64,18 +64,7 @@ export class Mesh extends Entity {
             return list;
         }, [] as Tri[]);
 
-        // projectedTris.sort((a, b) => {
-        //     const z1 = (a.p[0].z + a.p[1].z + a.p[2].z) / 3;
-        //     const z2 = (b.p[0].z + b.p[1].z + b.p[2].z) / 3;
-        //     return z2 - z1;
-        // });
-
-        performance.mark("clippingStart");
-
-        return projectedTris.reduce((list, tri) => {
-            list.push(...camera.frustumClip(tri));
-            return list;
-        }, [] as Tri[]);
+        return projectedTris;
     }
 
 }

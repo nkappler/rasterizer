@@ -1,11 +1,8 @@
 import { Entity } from "./entity";
 import { Matrix4 } from "./matrix";
 import { Tri } from "./tri";
-import { Vec, IVec3D } from "./vector";
+import { IVec3D, Vec } from "./vector";
 
-const matInvertYX = Matrix4.makeIdentity();
-matInvertYX[0][0] = -1;
-matInvertYX[1][1] = -1;
 const upP = Vec.make3D(0, 1, 0), upN = Vec.make3D(0, -1, 0);
 const downP = Vec.make3D(0, -1, 0), downN = Vec.make3D(0, 1, 0);
 const leftP = Vec.make3D(-1, 0, 0), leftN = Vec.make3D(1, 0, 0);
@@ -82,7 +79,6 @@ export class Camera extends Entity {
                 triFrustum = Tri.MultiplyVectorAsConst(triFrustum, Vec.make3D(1 / w1, 1 / w2, 1 / w3));
 
                 // fix invert axis
-                // const triInverted = Tri.MultiplyMatrix(triFrustum, matInvertY);
                 triFrustum.p[0].y *= -1;
                 triFrustum.p[1].y *= -1;
                 triFrustum.p[2].y *= -1;
