@@ -62,6 +62,10 @@ export class Camera extends Entity {
     /* Project a Triangle into 2D normalized space, clipping it if it exceeds the near or far plane */
     public project2D(tri: Tri,): Tri[] {
 
+        //We can speed things up by extracting all the vertices from the tris and adding them to a Set.
+        //This will avoid making duplicate calculations, however handling the vertices becomes harder since they need to be stored by reference instead of
+        //individual objects. This could be done in many steps of the render pipeline...
+
         //Convert World Space -> View Space
         const triViewed = Tri.MultiplyMatrix(tri, this.viewMatrix);
 
