@@ -169,9 +169,6 @@ export namespace Canvas {
         uvStepLeft: IVec3D, uvStepRight: IVec3D,
         tex: Texture, luminance: number
     ): void {
-        // get a reference to the texture width and height instead of aquiring it for each pixel of the tri 
-        const { width: texWidth, height: texHeight } = tex;
-
         // xLeft might be identical to xRight in the beginning but they propagate in different directions.
         // if the left side is larger than the right side, swap the points
         if (xLeft + xStepLeft > xRight + xStepRight) {
@@ -183,6 +180,9 @@ export namespace Canvas {
                 uvStepRight, uvStepLeft,
                 tex, luminance);
         }
+
+        // get a reference to the texture width and height instead of aquiring it for each pixel of the tri
+        const { width: texWidth, height: texHeight } = tex;
 
         for (let i = startRow; i <= endRow; i++) {
             const currentStep = i - startRow;

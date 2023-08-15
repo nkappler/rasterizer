@@ -3,7 +3,6 @@ import { Canvas } from "./canvas";
 import { Input } from "./input";
 import { Mesh } from "./mesh";
 import { RenderPipeline } from "./pipeline";
-import { Tri } from "./tri";
 import { Vec } from "./vector";
 
 var mesh: Mesh = new Mesh([]);
@@ -19,14 +18,12 @@ window.addEventListener("resize", setup);
 function setup() {
     if (mesh.tris.length == 0) {
         Promise.all([
-            Canvas.loadImage("./src/tex.jpeg"),
+            Canvas.loadImage("./src/UVGrid.png"),
             Mesh.LoadFromObjFile("./src/teapot.obj")
         ]).then(([texture, teapot]) => {
-            mesh = new Mesh(
-                teapot.tris.map(t => new Tri(...t.p, Vec.make2D(0, 1), Vec.make2D(0, 0), Vec.make2D(1, 0)))
-            );
+            mesh = teapot;
 
-            mesh.translate(Vec.make3D(-0.5, -0.5, 14));
+            mesh.translate(Vec.make3D(-0.5, -0.5, 8));
             mesh.rotateY(0.1);
             mesh.rotateZ(0.3);
 

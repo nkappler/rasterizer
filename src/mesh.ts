@@ -2,7 +2,7 @@ import { Camera } from "./camera";
 import { Texture } from "./canvas";
 import { Entity } from "./entity";
 import { Tri } from "./tri";
-import { IVec3D, Vec } from "./vector";
+import { IVec2D, IVec3D, Vec } from "./vector";
 
 const light: IVec3D = Vec.Normalize(Vec.make3D(0.5, 0.5, -1));
 const color: IVec3D = Vec.make3D(255, 255, 255);
@@ -24,13 +24,29 @@ export class Mesh extends Entity {
         const text = await (await fetch(url)).text();
         const lines = text.split("\n");
         const verts: IVec3D[] = [];
+        const uvs: IVec2D[] = [];
         const tris: Tri[] = [];
         lines.forEach(line => {
             if (line.startsWith("v")) {
+                if (line.startsWith("vt")) {
+                    const [_, u, v] = line.split(" ", 3).map(Number);
+                    uvs.push(Vec.make2D(u, v));
+                    return;
+                }
+
                 const [_, x, y, z] = line.split(" ", 4).map(Number);
                 verts.push(Vec.make3D(x, y, z));
             }
             else if (line.startsWith("f")) {
+                if (line.includes("/")) {
+                    const [_, s1, s2, s3] = line.split(" ", 4);
+                    const [p1, t1] = s1.split("/").map(Number);
+                    const [p2, t2] = s2.split("/").map(Number);
+                    const [p3, t3] = s3.split("/").map(Number);
+                    tris.push(new Tri(verts[p1 - 1], verts[p2 - 1], verts[p3 - 1], uvs[t1 - 1], uvs[t2 - 1], uvs[t3 - 1]));
+                    return;
+                }
+
                 const [p1, p2, p3] = line.split(" ", 4).map(Number).filter(i => !isNaN(i)).map(i => verts[i - 1]);
                 tris.push(new Tri(p1, p2, p3));
             }
