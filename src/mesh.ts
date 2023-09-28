@@ -11,7 +11,6 @@ const color: IVec3D = Vec.make3D(255, 255, 255);
 export class Mesh extends Entity {
     public normals!: IVec3D[];
     public tris!: Tri[];
-    public luminances!: number[];
     public texture: Texture = null as any;
 
     public constructor(private verts: IVec3D[] = [], private uvs: IVec2D[] = [], private triIndizes: number[][] = []) {
@@ -63,25 +62,16 @@ export class Mesh extends Entity {
         this.tris = this.triIndizes.map(([p1, p2, p3, t1, t2, t3]) => new Tri(verts[p1], verts[p2], verts[p3], this.uvs[t1], this.uvs[t2], this.uvs[t3]));
 
         this.normals = this.tris.map(Tri.GetNormal);
-        this.luminances = new Array(this.tris.length);
     }
 
-    public projectTris(camera: Camera) {
-        const projectedTris = camera.backFaceCulling(this.tris, this.normals).reduce((list, { i: index }) => {
-            const tri = this.tris[index];
-            const triNormal = this.normals[index];
+    public cullTris(camera: Camera) {
+        const visibleTriIndizes = camera.backFaceCulling(this.tris, this.normals);
+        this.normals = visibleTriIndizes.map(({ i }) => this.normals[i]);
+        this.tris = visibleTriIndizes.map(({ i }) => this.tris[i]);
+    }
 
-            // Lighting
-            if (!this.luminances[index]) {
-                this.luminances[index] = Math.max(0.1, Vec.DotProduct(light, triNormal));
-            }
-            tri.l = this.luminances[index];
-
-            list.push(...camera.project2D(tri));
-            return list;
-        }, [] as Tri[]);
-
-        return projectedTris;
+    public illuminate() {
+        this.tris.map((t, i) => t.l = Math.max(0.1, Vec.DotProduct(light, this.normals[i])));
     }
 
 }

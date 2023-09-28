@@ -103,6 +103,14 @@ export namespace Input {
             pipeline.toggleTexture();
         }
 
+        if (keyPressed["KeyB"]) {
+            pipeline.toggleCulling();
+        }
+
+        if (keyPressed["KeyL"]) {
+            pipeline.toggleShading();
+        }
+
         keyPressed = {};
     }
 }

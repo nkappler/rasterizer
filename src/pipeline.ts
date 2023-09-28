@@ -13,10 +13,14 @@ export class RenderPipeline {
         typeof Identity,
         typeof Identity,
         typeof Identity,
+        typeof Identity,
+        typeof Identity,
     ]
 
     public constructor(private cam: Camera, private mesh: Mesh) {
         this.renderSteps = [
+            this.backFaceCulling.bind(this),
+            this.lighting.bind(this),
             this.project.bind(this),
             this.clip.bind(this),
             this.drawTexture.bind(this),
@@ -25,16 +29,23 @@ export class RenderPipeline {
         ];
     }
 
-    private project() {
-        return this.mesh.projectTris(this.cam);
+    private backFaceCulling() {
+        this.mesh.cullTris(this.cam);
+        return [];
+    }
+
+    private lighting() {
+        this.mesh.illuminate();
+        return [];
+    }
+
+    public project() {
+        return this.mesh.tris.flatMap(t => this.cam.project2D(t));
     }
 
     private clip(tris: Tri[]) {
         performance.mark("clippingStart");
-        return tris.reduce((list, tri) => {
-            list.push(...this.cam.frustumClip(tri));
-            return list;
-        }, [] as Tri[]);
+        return tris.flatMap(tri => this.cam.frustumClip(tri));
     }
 
     private drawTexture(tris: Tri[]) {
@@ -97,16 +108,24 @@ export class RenderPipeline {
         this.renderSteps[3] = this.renderSteps[3] === this.wireframe ? Identity : this.wireframe;
     }
 
+    public toggleCulling() {
+        this.renderSteps[0] = this.renderSteps[0].name === "bound backFaceCulling" ? Identity : this.backFaceCulling.bind(this);
+    }
+
+    public toggleShading() {
+        this.renderSteps[1] = this.renderSteps[1].name === "bound lighting" ? Identity : this.lighting.bind(this);
+    }
+
     public toggleTexture() {
-        if (this.renderSteps[2] === this.draw) {
-            this.renderSteps[2] = this.drawVoid;
-            this.renderSteps[3] = this.wireframe;
-        } else if (this.renderSteps[2].name === "bound drawTexture") {
-            this.renderSteps[2] = this.draw;
-            this.renderSteps[3] = Identity;
+        if (this.renderSteps[4] === this.draw) {
+            this.renderSteps[4] = this.drawVoid;
+            this.renderSteps[5] = this.wireframe;
+        } else if (this.renderSteps[4].name === "bound drawTexture") {
+            this.renderSteps[4] = this.draw;
+            this.renderSteps[5] = Identity;
         } else {
-            this.renderSteps[2] = this.drawTexture.bind(this);
-            this.renderSteps[3] = Identity;
+            this.renderSteps[4] = this.drawTexture.bind(this);
+            this.renderSteps[5] = Identity;
         }
     }
 }
