@@ -5,7 +5,7 @@ import { Mesh } from "./mesh";
 import { RenderPipeline } from "./pipeline";
 import { Vec } from "./vector";
 
-var mesh: Mesh = new Mesh([]);
+var mesh: Mesh = new Mesh();
 
 let camera: Camera = new Camera(1);
 let pipeline: RenderPipeline = new RenderPipeline(camera, mesh);

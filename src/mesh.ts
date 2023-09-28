@@ -1,6 +1,7 @@
 import { Camera } from "./camera";
 import { Texture } from "./canvas";
 import { Entity } from "./entity";
+import { Matrix4 } from "./matrix";
 import { Tri } from "./tri";
 import { IVec2D, IVec3D, Vec } from "./vector";
 
@@ -8,24 +9,24 @@ const light: IVec3D = Vec.Normalize(Vec.make3D(0.5, 0.5, -1));
 const color: IVec3D = Vec.make3D(255, 255, 255);
 
 export class Mesh extends Entity {
-    public normals: IVec3D[];
-    public tris: Tri[];
-    public luminances: number[];
+    public normals!: IVec3D[];
+    public tris!: Tri[];
+    public luminances!: number[];
     public texture: Texture = null as any;
 
-    public constructor(private rawTris: Tri[]) {
+    public constructor(private verts: IVec3D[] = [], private uvs: IVec2D[] = [], private triIndizes: number[][] = []) {
         super();
-        this.tris = rawTris;
-        this.normals = this.tris.map(Tri.GetNormal);
-        this.luminances = new Array(rawTris.length);
+        this.update();
     }
 
     public static async LoadFromObjFile(url: string) {
-        const text = await (await fetch(url)).text();
-        const lines = text.split("\n");
+        const convertToZeroBasedIndex = (indizes: string[]) => indizes.map(i => Number(i) - 1);
+
         const verts: IVec3D[] = [];
         const uvs: IVec2D[] = [];
-        const tris: Tri[] = [];
+        const text = await (await fetch(url)).text();
+        const lines = text.split("\n");
+        const tris: number[][] = [];
         lines.forEach(line => {
             if (line.startsWith("v")) {
                 if (line.startsWith("vt")) {
@@ -40,26 +41,29 @@ export class Mesh extends Entity {
             else if (line.startsWith("f")) {
                 if (line.includes("/")) {
                     const [_, s1, s2, s3] = line.split(" ", 4);
-                    const [p1, t1] = s1.split("/").map(Number);
-                    const [p2, t2] = s2.split("/").map(Number);
-                    const [p3, t3] = s3.split("/").map(Number);
-                    tris.push(new Tri(verts[p1 - 1], verts[p2 - 1], verts[p3 - 1], uvs[t1 - 1], uvs[t2 - 1], uvs[t3 - 1]));
+                    const [p1, t1] = convertToZeroBasedIndex(s1.split("/"));
+                    const [p2, t2] = convertToZeroBasedIndex(s2.split("/"));
+                    const [p3, t3] = convertToZeroBasedIndex(s3.split("/"));
+                    tris.push([p1, p2, p3, t1, t2, t3]);
                     return;
                 }
 
-                const [p1, p2, p3] = line.split(" ", 4).map(Number).filter(i => !isNaN(i)).map(i => verts[i - 1]);
-                tris.push(new Tri(p1, p2, p3));
+                const [_, p1, p2, p3] = convertToZeroBasedIndex(line.split(" ", 4));
+                tris.push([p1, p2, p3]);
             }
         });
 
-        return new Mesh(tris);
+        return new Mesh(verts, uvs, tris);
     }
 
     protected update() {
-        const worldMat = super.getTransformMatrix()
-        this.tris = this.rawTris.map(t => Tri.MultiplyMatrix(t, worldMat));
+        const worldMat = super.getTransformMatrix();
+        const verts = this.verts.map(v => Matrix4.MultiplyVector(v, worldMat));
+
+        this.tris = this.triIndizes.map(([p1, p2, p3, t1, t2, t3]) => new Tri(verts[p1], verts[p2], verts[p3], this.uvs[t1], this.uvs[t2], this.uvs[t3]));
+
         this.normals = this.tris.map(Tri.GetNormal);
-        this.luminances = new Array(this.rawTris.length);
+        this.luminances = new Array(this.tris.length);
     }
 
     public projectTris(camera: Camera) {
