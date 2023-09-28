@@ -4,6 +4,7 @@
   "description": "A 3D rasterized renderer",
   "main": "index.js",
   "scripts": {
+    "start": "tsc --w & http-server",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Nikolaj Kappler",
