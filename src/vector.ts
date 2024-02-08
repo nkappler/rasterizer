@@ -85,7 +85,11 @@ export abstract class Vec {
 
     /** linear interpolation */
     public static lerp(start: IVec3D, end: IVec3D, t: number) {
-        return Vec.Add(Vec.MultiplyConst(start, 1 - t), Vec.MultiplyConst(end, t));
+        return this.make3D(
+            start.x * (1-t) + end.x * t,
+            start.y * (1-t) + end.y * t,
+            start.z * (1-t) + end.z * t,
+        );
     }
     /** linear interpolation */
     public static lerp2D(start: IVec2D, end: IVec2D, t: number) {

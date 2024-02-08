@@ -79,14 +79,15 @@ export class Camera extends Entity {
 
                 // normalize (frustum) the result of the matrix multiplication
                 let [w1, w2, w3] = triProjected.p.map((p: IVec3D) => p.w);
+                const oneoverw = Vec.make3D(1 / w1, 1 / w2, 1 / w3)
 
-                let triFrustum = Tri.MultiplyVectorAsCons2D(triProjected, Vec.make3D(1 / w1, 1 / w2, 1 / w3));
+                let triFrustum = Tri.MultiplyVectorAsCons2D(triProjected, oneoverw);
 
                 triFrustum.t[0].w = 1 / w1;
                 triFrustum.t[1].w = 1 / w2;
                 triFrustum.t[2].w = 1 / w3;
 
-                triFrustum = Tri.MultiplyVectorAsConst(triFrustum, Vec.make3D(1 / w1, 1 / w2, 1 / w3));
+                triFrustum = Tri.MultiplyVectorAsConst(triFrustum, oneoverw);
 
                 // fix invert axis
                 triFrustum.p[0].y *= -1;
