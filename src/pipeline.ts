@@ -105,7 +105,7 @@ export class RenderPipeline {
     }
 
     public toggleWireFrame() {
-        this.renderSteps[3] = this.renderSteps[3] === this.wireframe ? Identity : this.wireframe;
+        this.renderSteps[5] = this.renderSteps[3] === this.wireframe ? Identity : this.wireframe;
     }
 
     public toggleCulling() {
