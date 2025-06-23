@@ -84,12 +84,11 @@ export abstract class Vec {
     }
 
     /** linear interpolation */
-    public static lerp(start: IVec3D, end: IVec3D, t: number) {
-        return this.make3D(
-            start.x * (1-t) + end.x * t,
-            start.y * (1-t) + end.y * t,
-            start.z * (1-t) + end.z * t,
-        );
+    public static lerp(start: IVec3D, end: IVec3D, t: number, out: IVec3D = Vec.make3D()) {
+        out.x = start.x * (1 - t) + end.x * t;
+        out.y = start.y * (1 - t) + end.y * t;
+        out.z = start.z * (1 - t) + end.z * t;
+        return out;
     }
     /** linear interpolation */
     public static lerp2D(start: IVec2D, end: IVec2D, t: number) {

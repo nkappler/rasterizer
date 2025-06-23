@@ -65,8 +65,11 @@ define("vector", ["require", "exports"], function (require, exports) {
             return { v: Vec.Add(lineStart, lineToIntersect), t };
         }
         /** linear interpolation */
-        static lerp(start, end, t) {
-            return this.make3D(start.x * (1 - t) + end.x * t, start.y * (1 - t) + end.y * t, start.z * (1 - t) + end.z * t);
+        static lerp(start, end, t, out = Vec.make3D()) {
+            out.x = start.x * (1 - t) + end.x * t;
+            out.y = start.y * (1 - t) + end.y * t;
+            out.z = start.z * (1 - t) + end.z * t;
+            return out;
         }
         /** linear interpolation */
         static lerp2D(start, end, t) {
@@ -596,6 +599,7 @@ define("canvas", ["require", "exports", "tri", "vector"], function (require, exp
             }
             // get a reference to the texture width and height instead of aquiring it for each pixel of the tri
             const { width: texWidth, height: texHeight } = tex;
+            const lerpResult = vector_5.Vec.make3D();
             for (let i = startRow; i <= endRow; i++) {
                 const currentStep = i - startRow;
                 const startCol = Math.round(xLeft + currentStep * xStepLeft);
@@ -605,7 +609,8 @@ define("canvas", ["require", "exports", "tri", "vector"], function (require, exp
                 const t_step = 1 / (endCol - startCol);
                 let t = 0;
                 for (let j = startCol; j < endCol; j++) {
-                    const { x: tex_u, y: tex_v, z: tex_w } = vector_5.Vec.lerp(tex_start, tex_end, t);
+                    vector_5.Vec.lerp(tex_start, tex_end, t, lerpResult);
+                    const { x: tex_u, y: tex_v, z: tex_w } = lerpResult;
                     if (tex_w > depthBuffer[i * width + j]) {
                         DrawPixel(j, i, SampleColorUInt8(tex_u / tex_w, tex_v / tex_w, tex, texWidth, texHeight), luminance);
                         depthBuffer[i * width + j] = tex_w;

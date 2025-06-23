@@ -184,6 +184,8 @@ export namespace Canvas {
         // get a reference to the texture width and height instead of aquiring it for each pixel of the tri
         const { width: texWidth, height: texHeight } = tex;
 
+        const lerpResult = Vec.make3D();
+
         for (let i = startRow; i <= endRow; i++) {
             const currentStep = i - startRow;
             const startCol = Math.round(xLeft + currentStep * xStepLeft);
@@ -196,7 +198,8 @@ export namespace Canvas {
             let t = 0;
 
             for (let j = startCol; j < endCol; j++) {
-                const { x: tex_u, y: tex_v, z: tex_w } = Vec.lerp(tex_start, tex_end, t);
+                Vec.lerp(tex_start, tex_end, t, lerpResult);
+                const { x: tex_u, y: tex_v, z: tex_w } = lerpResult;
 
                 if (tex_w > depthBuffer[i * width + j]) {
                     DrawPixel(j, i, SampleColorUInt8(tex_u / tex_w, tex_v / tex_w, tex, texWidth, texHeight), luminance);
