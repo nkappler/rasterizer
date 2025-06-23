@@ -212,11 +212,9 @@ export namespace Canvas {
 
     function SampleColorUInt8(u: number, v: number, tex: Texture, width: number, height: number) {
         // due to rounding errors and all javascript numbers being floating point,
-        // u and v can end up being slightly below zero (e.g. -0.0000000001)
-        // by adding tiny offsets, the range is mapped to within the texture, making sure we
-        // don't try to access the colors array out of it's bounds.
-        const col = Math.floor((u + 0.0000001) * (width - 0.001));
-        const row = Math.floor((v + 0.0000001) * (height - 0.001));
+        // u and v can end up being slightly below zero (e.g. -0.0000000001), hence the Math.trunc
+        const col = Math.trunc(u * width);
+        const row = Math.trunc(v * height);
         return tex.colorsUInt8[col + width * row];
     }
 
