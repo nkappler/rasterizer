@@ -25,8 +25,8 @@ export namespace Canvas {
         const _ctx = canvas.getContext("2d");
         if (!_ctx) throw "2D Context could not be created";
         ctx = _ctx;
-        width = canvas.getBoundingClientRect().width;
-        height = canvas.getBoundingClientRect().height;
+        width = Math.round(canvas.getBoundingClientRect().width);
+        height = Math.round(canvas.getBoundingClientRect().height);
         canvas.setAttribute("width", width + "px");
         canvas.setAttribute("height", height + "px");
 
