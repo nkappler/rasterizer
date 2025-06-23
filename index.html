@@ -1,24 +1,90 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rasterizer</title>
     <style>
-        html, body {
+        html,
+        body {
             margin: 0;
             height: 100%;
         }
+
         canvas {
             width: 100%;
             height: 100%;
+            image-rendering: pixelated;
+        }
+
+        aside {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 25vw;
+            font-family: Arial, Helvetica, sans-serif;
+            color: #0f0;
+            padding: 0 2em;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        a,
+        a:visited,
+        a:active {
+            color: #0f0;
+            text-decoration: underline;
+        }
+
+        a:hover {
+            display: inline-block;
+            transform: translate(-2px, -2px);
         }
     </style>
     <script src="./node_modules/requirejs/require.js"></script>
     <script src="index.js" type="module"></script>
     <script>require(["index"]);</script>
 </head>
+
 <body>
     <canvas></canvas>
+    <aside id="help">
+        <h1>Software Rasterizer</h1>
+        <p>
+            This is a simple 3D renderer (rasterizer) which is entirely software-based.
+            This means all the calculations are done in JavaScript, without using WebGL or any other hardware acceleration
+            or in other words, it runs on your processor (on a single core) instead of your graphics card.
+        </p>
+        <p>
+            Don't be fooled by the performance, graphics cards are designed to do this kind of work very efficiently
+            and I am surprised how well this works in the browser. JavaScript is not known for its speed, but
+            I was able to find some optimizations that make this work quite well, although with more time there would be
+            a few things I could still improve.
+        </p>
+        <p>
+            This project is based on this <a href="https://www.youtube.com/watch?v=ih20l3pJoeU">wonderful video series from David Barr on YouTube</a>, although I've implemented some optimizations to make it run faster in the browser.
+            You can find the code on <a href="https://github.com/nkappler/rasterizer">my GitHub</a>.
+        </p>
+        <h3>Controls</h3>
+        <p>You can click inside the window to enable moving the camera with your Mouse or use different keyboard controls:</p>
+        <ul>
+            <li>W - Move forward</li>
+            <li>S - Move backward</li>
+            <li>A - Strafe left</li>
+            <li>D - Strafe right</li>
+            <li>Q - Move up</li>
+            <li>E - Move down</li>
+            <li>&rarr; &larr; &uarr; &darr; - Look around</li>
+            <li>T - toggle render modes (Wireframe, untextured w/o depth buffer)</li>
+            <li>B - toggle backface culling</li>
+            <li>L - toggle Lighting</li>
+            <li>H - Hide this text</li>
+        </ul>
+
+    </aside>
 </body>
+
 </html>

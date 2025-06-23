@@ -111,6 +111,10 @@ export namespace Input {
             pipeline.toggleShading();
         }
 
+        if (keyPressed["KeyH"]) {
+            document.querySelector("#help")?.classList.toggle("hidden");
+        }
+
         keyPressed = {};
     }
 }
