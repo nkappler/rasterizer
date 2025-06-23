@@ -22,10 +22,14 @@
             position: absolute;
             top: 0;
             right: 0;
-            width: 25vw;
+            width: 33vw;
             font-family: Arial, Helvetica, sans-serif;
             color: #0f0;
             padding: 0 2em;
+        }
+
+        li {
+            list-style-type: none;
         }
 
         .hidden {
@@ -44,9 +48,9 @@
             transform: translate(-2px, -2px);
         }
     </style>
-    <script src="./node_modules/requirejs/require.js"></script>
+    <script src="https://unpkg.com/requirejs"></script>
     <script src="index.js" type="module"></script>
-    <script>require(["index"]);</script>
+    <script defer>require(["index"]);</script>
 </head>
 
 <body>
@@ -66,10 +70,10 @@
         </p>
         <p>
             This project is based on this <a href="https://www.youtube.com/watch?v=ih20l3pJoeU">wonderful video series from David Barr on YouTube</a>, although I've implemented some optimizations to make it run faster in the browser.
-            You can find the code on <a href="https://github.com/nkappler/rasterizer">my GitHub</a>.
+            This project was implemented with TypeScript and you can find the Code on <a href="https://github.com/nkappler/rasterizer">my GitHub</a>.
         </p>
         <h3>Controls</h3>
-        <p>You can click inside the window to enable moving the camera with your Mouse or use different keyboard controls:</p>
+        <p>You can click inside the window to enable moving the camera with your Mouse and use different keyboard controls:</p>
         <ul>
             <li>W - Move forward</li>
             <li>S - Move backward</li>

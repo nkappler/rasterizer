@@ -18,8 +18,8 @@ window.addEventListener("resize", setup);
 function setup() {
     if (mesh.tris.length == 0) {
         Promise.all([
-            Canvas.loadImage("./src/UVGrid.png"),
-            Mesh.LoadFromObjFile("./src/teapot.obj")
+            Canvas.loadImage("./UVGrid.png"),
+            Mesh.LoadFromObjFile("./teapot.obj")
         ]).then(([texture, teapot]) => {
             mesh = teapot;
 
