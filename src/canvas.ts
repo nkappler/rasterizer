@@ -4,6 +4,7 @@ import { IVec2D, IVec3D, Vec } from "./vector";
 export interface Texture extends ImageData {
     colors: string[];
     colorsUInt8: Uint8ClampedArray[];
+    colorsUInt32: Uint32Array;
 }
 
 export namespace Canvas {
@@ -18,6 +19,8 @@ export namespace Canvas {
 
     let imageData = new ImageData(new Uint8ClampedArray(4), 1);
     let emptyImageData = new ImageData(new Uint8ClampedArray(4), 1);
+
+    let uint32View: Uint32Array = new Uint32Array();
 
     let framecount = 0;
     let medianElapsed = 16.6;
@@ -42,6 +45,7 @@ export namespace Canvas {
         imageData = ctx.getImageData(0, 0, width, height);
         emptyDepthBuffer = new Uint32Array(width * height).fill(0);
         depthBuffer = new Uint32Array(width * height);
+        uint32View = new Uint32Array(imageData.data.buffer);
 
         const AspectRatio = height / width;
         return AspectRatio;
@@ -70,12 +74,16 @@ export namespace Canvas {
                 const tex = ctx.getImageData(0, 0, img.width, img.height);
                 const colors: string[] = [];
                 const colorsUInt8: Uint8ClampedArray[] = [];
+                const colorsUInt32 = new Uint32Array(img.width * img.height);
                 for (let i = 0; i < tex.data.length; i += 4) {
                     const color = tex.data.slice(i, i + 4)
                     colorsUInt8.push(color);
                     colors.push(`rgba(${color.join(",")})`);
+                    const [r, g, b, a] = color;
+                    const color32 = a << 24 | b << 16 | g << 8 | r;
+                    colorsUInt32[i / 4] = color32;
                 }
-                res(Object.assign(tex, { colors, colorsUInt8 }));
+                res(Object.assign(tex, { colors, colorsUInt8, colorsUInt32 }));
                 ctx.canvas.width = width;
                 ctx.canvas.height = height;
             };
@@ -225,15 +233,18 @@ export namespace Canvas {
         // u and v can end up being slightly below zero (e.g. -0.0000000001), hence the Math.trunc
         const col = Math.trunc(u * width);
         const row = Math.trunc(v * height);
-        return tex.colorsUInt8[col + width * row];
+        return tex.colorsUInt32[col + width * row];
     }
 
-    function DrawPixel(x: number, y: number, [r, g, b, a]: Uint8ClampedArray, luminance: number) {
-        let i = (x + width * y) * 4;
-        imageData.data[i] = r * luminance;
-        imageData.data[i + 1] = g * luminance;
-        imageData.data[i + 2] = b * luminance;
-        imageData.data[i + 3] = a;
+    function DrawPixel(x: number, y: number, color: number, luminance: number) {
+        // we still need to multiply the color by the luminance, since the color is stored in a Uint32Array, each color channel at a time
+        color =
+            ((color & 0xff000000)) |
+            ((color & 0x00ff0000) * luminance & 0x00ff0000) |
+            ((color & 0x0000ff00) * luminance & 0x0000ff00) |
+            ((color & 0x000000ff) * luminance & 0x000000ff);
+
+        uint32View[x + width * y] = color;
     }
 
     export function swapImageData() {
