@@ -461,12 +461,13 @@ define("canvas", ["require", "exports", "tri", "vector"], function (require, exp
         let height;
         let ctx;
         const frametimes = new Array(10).fill(Infinity);
-        let depthBuffer = [];
+        const HalfMax32UInt = 2 ** 16 - 1;
+        let depthBuffer = new Uint32Array();
+        let emptyDepthBuffer = new Uint32Array();
         let imageData = new ImageData(new Uint8ClampedArray(4), 1);
+        let emptyImageData = new ImageData(new Uint8ClampedArray(4), 1);
         let framecount = 0;
         let medianElapsed = 16.6;
-        let emptyImageData = new ImageData(new Uint8ClampedArray(4), 1);
-        let emptyDepthBuffer = [];
         let backgroundColor;
         function SetupCanvas(_backgroundColor = "#112244") {
             const canvas = document.querySelector("canvas");
@@ -485,7 +486,9 @@ define("canvas", ["require", "exports", "tri", "vector"], function (require, exp
             ctx.fillStyle = backgroundColor;
             ctx.fillRect(0, 0, width, height);
             emptyImageData = ctx.getImageData(0, 0, width, height);
-            emptyDepthBuffer = new Array(width * height).fill(0);
+            imageData = ctx.getImageData(0, 0, width, height);
+            emptyDepthBuffer = new Uint32Array(width * height).fill(0);
+            depthBuffer = new Uint32Array(width * height);
             const AspectRatio = height / width;
             return AspectRatio;
         }
@@ -497,8 +500,8 @@ define("canvas", ["require", "exports", "tri", "vector"], function (require, exp
             ctx.lineWidth = 0;
             ctx.fillStyle = backgroundColor;
             ctx.fillRect(0, 0, width, height);
-            imageData = new ImageData(emptyImageData.data.slice(), width);
-            depthBuffer = emptyDepthBuffer.slice();
+            imageData.data.set(emptyImageData.data);
+            depthBuffer.set(emptyDepthBuffer);
         }
         Canvas.clear = clear;
         function loadImage(path) {
@@ -611,9 +614,9 @@ define("canvas", ["require", "exports", "tri", "vector"], function (require, exp
                 for (let j = startCol; j < endCol; j++) {
                     vector_5.Vec.lerp(tex_start, tex_end, t, lerpResult);
                     const { x: tex_u, y: tex_v, z: tex_w } = lerpResult;
-                    if (tex_w > depthBuffer[i * width + j]) {
+                    if ((tex_w * HalfMax32UInt) > depthBuffer[i * width + j]) {
                         DrawPixel(j, i, SampleColorUInt8(tex_u / tex_w, tex_v / tex_w, tex, texWidth, texHeight), luminance);
-                        depthBuffer[i * width + j] = tex_w;
+                        depthBuffer[i * width + j] = tex_w * HalfMax32UInt;
                     }
                     t += t_step;
                 }
