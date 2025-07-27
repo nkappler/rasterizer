@@ -807,7 +807,7 @@ define("pipeline", ["require", "exports", "canvas"], function (require, exports,
         render(elapsed) {
             performance.clearMarks();
             performance.mark("FrameStart");
-            (this.renderSteps[4] === this.draw || this.renderSteps[4].name == "bound drawTexture")
+            (this.renderSteps[4] === this.draw || this.renderSteps[4].name !== "bound drawTexture")
                 ? canvas_1.Canvas.clearCTX(elapsed)
                 : canvas_1.Canvas.clear(elapsed);
             this.renderSteps.reduce((tris, step) => step(tris), []);
