@@ -99,7 +99,9 @@ export class RenderPipeline {
     public render(elapsed: number) {
         performance.clearMarks();
         performance.mark("FrameStart");
-        Canvas.clear(elapsed);
+        (this.renderSteps[4] === this.draw || this.renderSteps[4].name == "bound drawTexture")
+            ? Canvas.clearCTX(elapsed)
+            : Canvas.clear(elapsed);
 
         this.renderSteps.reduce((tris, step) => step(tris), [] as Tri[]);
     }

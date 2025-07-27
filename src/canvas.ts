@@ -52,15 +52,24 @@ export namespace Canvas {
     }
 
     export function clear(elapsed: number) {
-        framecount++;
-        frametimes[framecount % frametimes.length] = elapsed;
-        medianElapsed = frametimes.reduce((a, b) => a + b) / frametimes.length;
+        updateFrameTimes(elapsed);
+
+        imageData.data.set(emptyImageData.data);
+        depthBuffer.set(emptyDepthBuffer);
+    }
+
+    export function clearCTX(elapsed: number) {
+        updateFrameTimes(elapsed);
 
         ctx.lineWidth = 0;
         ctx.fillStyle = backgroundColor;
         ctx.fillRect(0, 0, width, height);
-        imageData.data.set(emptyImageData.data);
-        depthBuffer.set(emptyDepthBuffer);
+    }
+
+    function updateFrameTimes(elapsed: number) {
+        framecount++;
+        frametimes[framecount % frametimes.length] = elapsed;
+        medianElapsed = frametimes.reduce((a, b) => a + b) / frametimes.length;
     }
 
     export async function loadImage(path: string) {

@@ -496,16 +496,23 @@ define("canvas", ["require", "exports", "tri", "vector"], function (require, exp
         }
         Canvas.SetupCanvas = SetupCanvas;
         function clear(elapsed) {
-            framecount++;
-            frametimes[framecount % frametimes.length] = elapsed;
-            medianElapsed = frametimes.reduce((a, b) => a + b) / frametimes.length;
-            ctx.lineWidth = 0;
-            ctx.fillStyle = backgroundColor;
-            ctx.fillRect(0, 0, width, height);
+            updateFrameTimes(elapsed);
             imageData.data.set(emptyImageData.data);
             depthBuffer.set(emptyDepthBuffer);
         }
         Canvas.clear = clear;
+        function clearCTX(elapsed) {
+            updateFrameTimes(elapsed);
+            ctx.lineWidth = 0;
+            ctx.fillStyle = backgroundColor;
+            ctx.fillRect(0, 0, width, height);
+        }
+        Canvas.clearCTX = clearCTX;
+        function updateFrameTimes(elapsed) {
+            framecount++;
+            frametimes[framecount % frametimes.length] = elapsed;
+            medianElapsed = frametimes.reduce((a, b) => a + b) / frametimes.length;
+        }
         function loadImage(path) {
             return __awaiter(this, void 0, void 0, function* () {
                 return new Promise(res => {
@@ -800,7 +807,9 @@ define("pipeline", ["require", "exports", "canvas"], function (require, exports,
         render(elapsed) {
             performance.clearMarks();
             performance.mark("FrameStart");
-            canvas_1.Canvas.clear(elapsed);
+            (this.renderSteps[4] === this.draw || this.renderSteps[4].name == "bound drawTexture")
+                ? canvas_1.Canvas.clearCTX(elapsed)
+                : canvas_1.Canvas.clear(elapsed);
             this.renderSteps.reduce((tris, step) => step(tris), []);
         }
         toggleWireFrame() {
