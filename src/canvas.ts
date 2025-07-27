@@ -230,10 +230,10 @@ export namespace Canvas {
 
     function DrawPixel(x: number, y: number, [r, g, b, a]: Uint8ClampedArray, luminance: number) {
         let i = (x + width * y) * 4;
-        imageData.data[i++] = r * luminance;
-        imageData.data[i++] = g * luminance;
-        imageData.data[i++] = b * luminance;
-        imageData.data[i] = a;
+        imageData.data[i] = r * luminance;
+        imageData.data[i + 1] = g * luminance;
+        imageData.data[i + 2] = b * luminance;
+        imageData.data[i + 3] = a;
     }
 
     export function swapImageData() {

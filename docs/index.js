@@ -635,10 +635,10 @@ define("canvas", ["require", "exports", "tri", "vector"], function (require, exp
         }
         function DrawPixel(x, y, [r, g, b, a], luminance) {
             let i = (x + width * y) * 4;
-            imageData.data[i++] = r * luminance;
-            imageData.data[i++] = g * luminance;
-            imageData.data[i++] = b * luminance;
-            imageData.data[i] = a;
+            imageData.data[i] = r * luminance;
+            imageData.data[i + 1] = g * luminance;
+            imageData.data[i + 2] = b * luminance;
+            imageData.data[i + 3] = a;
         }
         function swapImageData() {
             ctx.putImageData(imageData, 0, 0);
