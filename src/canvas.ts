@@ -64,6 +64,8 @@ export namespace Canvas {
             const img = document.createElement("img");
             img.src = path;
             img.onload = () => {
+                ctx.canvas.width = img.width;
+                ctx.canvas.height = img.height;
                 ctx.drawImage(img, 0, 0);
                 const tex = ctx.getImageData(0, 0, img.width, img.height);
                 const colors: string[] = [];
@@ -74,6 +76,8 @@ export namespace Canvas {
                     colors.push(`rgba(${color.join(",")})`);
                 }
                 res(Object.assign(tex, { colors, colorsUInt8 }));
+                ctx.canvas.width = width;
+                ctx.canvas.height = height;
             };
         });
     }
