@@ -18,8 +18,11 @@ define("vector", ["require", "exports"], function (require, exports) {
         static make2D(u = 0, v = 0, w = 1) {
             return { u, v, w };
         }
-        static Add(v1, v2) {
-            return this.make3D(v1.x + v2.x, v1.y + v2.y, v1.z + v2.z);
+        static Add(v1, v2, out = this.make3D()) {
+            out.x = v1.x + v2.x;
+            out.y = v1.y + v2.y;
+            out.z = v1.z + v2.z;
+            return out;
         }
         static Subtract(v1, v2) {
             return this.make3D(v1.x - v2.x, v1.y - v2.y, v1.z - v2.z);
@@ -33,8 +36,11 @@ define("vector", ["require", "exports"], function (require, exports) {
         static AddConst({ x, y, z }, c) {
             return this.make3D(x + c, y + c, z + c);
         }
-        static MultiplyConst({ x, y, z }, c) {
-            return this.make3D(x * c, y * c, z * c);
+        static MultiplyConst({ x, y, z }, c, out = this.make3D()) {
+            out.x = x * c;
+            out.y = y * c;
+            out.z = z * c;
+            return out;
         }
         static MultiplyConst2D({ u, v }, c) {
             return this.make2D(u * c, v * c);
@@ -259,6 +265,17 @@ define("tri", ["require", "exports", "matrix", "vector"], function (require, exp
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Tri = void 0;
+    // ClipAgainstPlane
+    // Create two temporary storage arrays to classify points either side of plane
+    // If distance sign is positive, point lies on "inside" of plane
+    let inside_points = new Array(3);
+    let insideCount = 0;
+    let outside_points = new Array(3);
+    let outsideCount = 0;
+    let inside_tex = new Array(3);
+    let insideTexCount = 0;
+    let outside_tex = new Array(3);
+    let outsideTexCount = 0;
     class Tri {
         constructor(p1 = vector_3.Vec.make3D(), p2 = vector_3.Vec.make3D(), p3 = vector_3.Vec.make3D(), t1 = vector_3.Vec.make2D(), t2 = vector_3.Vec.make2D(), t3 = vector_3.Vec.make2D(), l = 1) {
             this.p = [p1, p2, p3];
@@ -297,43 +314,37 @@ define("tri", ["require", "exports", "matrix", "vector"], function (require, exp
         static ClipAgainstPlane(point, normal, tri) {
             // Get signed shortest distance from point to plane, plane normal must be normalised
             const dist = (p) => vector_3.Vec.DotProduct(normal, p) - vector_3.Vec.DotProduct(normal, point);
-            // Create two temporary storage arrays to classify points either side of plane
-            // If distance sign is positive, point lies on "inside" of plane
-            let inside_points = new Array(3);
-            let insideCount = 0;
-            let outside_points = new Array(3);
-            let outsideCount = 0;
-            let inside_tex = new Array(3);
-            let insideTexCount = 0;
-            let outside_tex = new Array(3);
-            let outsideTexCount = 0;
+            insideCount = 0;
+            outsideCount = 0;
+            insideTexCount = 0;
+            outsideTexCount = 0;
             // Get signed distance of each point in triangle to plane
             const d0 = dist(tri.p[0]);
             const d1 = dist(tri.p[1]);
             const d2 = dist(tri.p[2]);
             if (d0 >= 0) {
                 inside_points[insideCount++] = tri.p[0];
-                inside_tex[insideTexCount++] = Object.assign({}, tri.t[0]);
+                inside_tex[insideTexCount++] = tri.t[0];
             }
             else {
                 outside_points[outsideCount++] = tri.p[0];
-                outside_tex[outsideTexCount++] = Object.assign({}, tri.t[0]);
+                outside_tex[outsideTexCount++] = tri.t[0];
             }
             if (d1 >= 0) {
                 inside_points[insideCount++] = tri.p[1];
-                inside_tex[insideTexCount++] = Object.assign({}, tri.t[1]);
+                inside_tex[insideTexCount++] = tri.t[1];
             }
             else {
                 outside_points[outsideCount++] = tri.p[1];
-                outside_tex[outsideTexCount++] = Object.assign({}, tri.t[1]);
+                outside_tex[outsideTexCount++] = tri.t[1];
             }
             if (d2 >= 0) {
                 inside_points[insideCount++] = tri.p[2];
-                inside_tex[insideTexCount++] = Object.assign({}, tri.t[2]);
+                inside_tex[insideTexCount++] = tri.t[2];
             }
             else {
                 outside_points[outsideCount++] = tri.p[2];
-                outside_tex[outsideTexCount++] = Object.assign({}, tri.t[2]);
+                outside_tex[outsideTexCount++] = tri.t[2];
             }
             if (insideCount === 0) {
                 return [];
@@ -620,12 +631,15 @@ define("canvas", ["require", "exports", "tri", "vector"], function (require, exp
             // get a reference to the texture width and height instead of aquiring it for each pixel of the tri
             const { width: texWidth, height: texHeight } = tex;
             const lerpResult = vector_5.Vec.make3D();
+            const tex_start = vector_5.Vec.make3D();
+            const tex_end = vector_5.Vec.make3D();
+            const temp_out = vector_5.Vec.make3D();
             for (let i = startRow; i <= endRow; i++) {
                 const currentStep = i - startRow;
                 const startCol = Math.round(xLeft + currentStep * xStepLeft);
                 const endCol = Math.round(xRight + currentStep * xStepRight);
-                const tex_start = vector_5.Vec.Add(uvLeft, vector_5.Vec.MultiplyConst(uvStepLeft, currentStep));
-                const tex_end = vector_5.Vec.Add(uvRight, vector_5.Vec.MultiplyConst(uvStepRight, currentStep));
+                vector_5.Vec.Add(uvLeft, vector_5.Vec.MultiplyConst(uvStepLeft, currentStep, temp_out), tex_start);
+                vector_5.Vec.Add(uvRight, vector_5.Vec.MultiplyConst(uvStepRight, currentStep, temp_out), tex_end);
                 const t_step = 1 / (endCol - startCol);
                 let t = 0;
                 for (let j = startCol; j < endCol; j++) {

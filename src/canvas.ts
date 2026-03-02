@@ -212,14 +212,17 @@ export namespace Canvas {
         const { width: texWidth, height: texHeight } = tex;
 
         const lerpResult = Vec.make3D();
+        const tex_start = Vec.make3D();
+        const tex_end = Vec.make3D();
+        const temp_out = Vec.make3D();
 
         for (let i = startRow; i <= endRow; i++) {
             const currentStep = i - startRow;
             const startCol = Math.round(xLeft + currentStep * xStepLeft);
             const endCol = Math.round(xRight + currentStep * xStepRight);
 
-            const tex_start = Vec.Add(uvLeft, Vec.MultiplyConst(uvStepLeft, currentStep));
-            const tex_end = Vec.Add(uvRight, Vec.MultiplyConst(uvStepRight, currentStep));
+            Vec.Add(uvLeft, Vec.MultiplyConst(uvStepLeft, currentStep, temp_out), tex_start);
+            Vec.Add(uvRight, Vec.MultiplyConst(uvStepRight, currentStep, temp_out), tex_end);
 
             const t_step = 1 / (endCol - startCol);
             let t = 0;

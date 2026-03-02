@@ -21,9 +21,13 @@ export abstract class Vec {
         return { u, v, w };
     }
 
-    public static Add(v1: IVec3D, v2: IVec3D) {
-        return this.make3D(v1.x + v2.x, v1.y + v2.y, v1.z + v2.z);
+    public static Add(v1: IVec3D, v2: IVec3D, out = this.make3D()) {
+        out.x = v1.x + v2.x;
+        out.y = v1.y + v2.y;
+        out.z = v1.z + v2.z;
+        return out;
     }
+
     public static Subtract(v1: IVec3D, v2: IVec3D): IVec3D {
         return this.make3D(v1.x - v2.x, v1.y - v2.y, v1.z - v2.z);
     }
@@ -40,8 +44,11 @@ export abstract class Vec {
         return this.make3D(x + c, y + c, z + c);
     }
 
-    public static MultiplyConst({ x, y, z }: IVec3D, c: number) {
-        return this.make3D(x * c, y * c, z * c);
+    public static MultiplyConst({ x, y, z }: IVec3D, c: number, out = this.make3D()) {
+        out.x = x * c;
+        out.y = y * c;
+        out.z = z * c;
+        return out;
     }
 
     public static MultiplyConst2D({ u, v }: IVec2D, c: number) {

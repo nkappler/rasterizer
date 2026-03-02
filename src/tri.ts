@@ -1,6 +1,14 @@
 import { Matrix4 } from "./matrix";
 import { IVec2D, IVec3D, Vec } from "./vector";
 
+// ClipAgainstPlane
+// Create two temporary storage arrays to classify points either side of plane
+// If distance sign is positive, point lies on "inside" of plane
+let inside_points: IVec3D[] = new Array(3); let insideCount = 0;
+let outside_points: IVec3D[] = new Array(3); let outsideCount = 0;
+let inside_tex: IVec2D[] = new Array(3); let insideTexCount = 0;
+let outside_tex: IVec2D[] = new Array(3); let outsideTexCount = 0;
+
 export class Tri {
     public p: [IVec3D, IVec3D, IVec3D];
     public t: [IVec2D, IVec2D, IVec2D];
@@ -99,12 +107,10 @@ export class Tri {
         // Get signed shortest distance from point to plane, plane normal must be normalised
         const dist = (p: IVec3D) => Vec.DotProduct(normal, p) - Vec.DotProduct(normal, point);
 
-        // Create two temporary storage arrays to classify points either side of plane
-        // If distance sign is positive, point lies on "inside" of plane
-        let inside_points: IVec3D[] = new Array(3); let insideCount = 0;
-        let outside_points: IVec3D[] = new Array(3); let outsideCount = 0;
-        let inside_tex: IVec2D[] = new Array(3); let insideTexCount = 0;
-        let outside_tex: IVec2D[] = new Array(3); let outsideTexCount = 0;
+        insideCount = 0;
+        outsideCount = 0;
+        insideTexCount = 0;
+        outsideTexCount = 0;
 
 
         // Get signed distance of each point in triangle to plane
@@ -112,12 +118,12 @@ export class Tri {
         const d1 = dist(tri.p[1]);
         const d2 = dist(tri.p[2]);
 
-        if (d0 >= 0) { inside_points[insideCount++] = tri.p[0]; inside_tex[insideTexCount++] = Object.assign({}, tri.t[0]) }
-        else { outside_points[outsideCount++] = tri.p[0]; outside_tex[outsideTexCount++] = Object.assign({}, tri.t[0]) }
-        if (d1 >= 0) { inside_points[insideCount++] = tri.p[1]; inside_tex[insideTexCount++] = Object.assign({}, tri.t[1]) }
-        else { outside_points[outsideCount++] = tri.p[1]; outside_tex[outsideTexCount++] = Object.assign({}, tri.t[1]) }
-        if (d2 >= 0) { inside_points[insideCount++] = tri.p[2]; inside_tex[insideTexCount++] = Object.assign({}, tri.t[2]) }
-        else { outside_points[outsideCount++] = tri.p[2]; outside_tex[outsideTexCount++] = Object.assign({}, tri.t[2]) }
+        if (d0 >= 0) { inside_points[insideCount++] = tri.p[0]; inside_tex[insideTexCount++] = tri.t[0] }
+        else { outside_points[outsideCount++] = tri.p[0]; outside_tex[outsideTexCount++] = tri.t[0] }
+        if (d1 >= 0) { inside_points[insideCount++] = tri.p[1]; inside_tex[insideTexCount++] = tri.t[1] }
+        else { outside_points[outsideCount++] = tri.p[1]; outside_tex[outsideTexCount++] = tri.t[1] }
+        if (d2 >= 0) { inside_points[insideCount++] = tri.p[2]; inside_tex[insideTexCount++] = tri.t[2] }
+        else { outside_points[outsideCount++] = tri.p[2]; outside_tex[outsideTexCount++] = tri.t[2] }
 
         if (insideCount === 0) {
             return [];
