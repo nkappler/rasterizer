@@ -215,6 +215,8 @@ export namespace Canvas {
         const tex_start = Vec.make3D();
         const tex_end = Vec.make3D();
         const temp_out = Vec.make3D();
+        let pixelIndex = 0;
+        let iWidth = 0;
 
         for (let i = startRow; i <= endRow; i++) {
             const currentStep = i - startRow;
@@ -226,14 +228,16 @@ export namespace Canvas {
 
             const t_step = 1 / (endCol - startCol);
             let t = 0;
+            iWidth = i * width;
 
             for (let j = startCol; j < endCol; j++) {
+                pixelIndex = iWidth + j;
                 Vec.lerp(tex_start, tex_end, t, lerpResult);
                 const { x: tex_u, y: tex_v, z: tex_w } = lerpResult;
 
-                if ((tex_w * HalfMax32UInt) > depthBuffer[i * width + j]) {
-                    DrawPixel(j, i, SampleColorUInt8(tex_u / tex_w, tex_v / tex_w, tex, texWidth, texHeight), luminance);
-                    depthBuffer[i * width + j] = tex_w * HalfMax32UInt;
+                if ((tex_w * HalfMax32UInt) > depthBuffer[pixelIndex]) {
+                    DrawPixel(pixelIndex, SampleColorUInt8(tex_u / tex_w, tex_v / tex_w, tex, texWidth, texHeight), luminance);
+                    depthBuffer[pixelIndex] = tex_w * HalfMax32UInt;
                 }
                 t += t_step;
             }
@@ -248,7 +252,7 @@ export namespace Canvas {
         return tex.colorsUInt32[col + width * row];
     }
 
-    function DrawPixel(x: number, y: number, color: number, luminance: number) {
+    function DrawPixel(pixelIndex: number, color: number, luminance: number) {
         // we still need to multiply the color by the luminance, since the color is stored in a Uint32Array, each color channel at a time
         color =
             ((color & 0xff000000)) |
@@ -256,7 +260,7 @@ export namespace Canvas {
             ((color & 0x0000ff00) * luminance & 0x0000ff00) |
             ((color & 0x000000ff) * luminance & 0x000000ff);
 
-        uint32View[x + width * y] = color;
+        uint32View[pixelIndex] = color;
     }
 
     export function swapImageData() {

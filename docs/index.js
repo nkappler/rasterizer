@@ -634,6 +634,8 @@ define("canvas", ["require", "exports", "tri", "vector"], function (require, exp
             const tex_start = vector_5.Vec.make3D();
             const tex_end = vector_5.Vec.make3D();
             const temp_out = vector_5.Vec.make3D();
+            let pixelIndex = 0;
+            let iWidth = 0;
             for (let i = startRow; i <= endRow; i++) {
                 const currentStep = i - startRow;
                 const startCol = Math.round(xLeft + currentStep * xStepLeft);
@@ -642,12 +644,14 @@ define("canvas", ["require", "exports", "tri", "vector"], function (require, exp
                 vector_5.Vec.Add(uvRight, vector_5.Vec.MultiplyConst(uvStepRight, currentStep, temp_out), tex_end);
                 const t_step = 1 / (endCol - startCol);
                 let t = 0;
+                iWidth = i * width;
                 for (let j = startCol; j < endCol; j++) {
+                    pixelIndex = iWidth + j;
                     vector_5.Vec.lerp(tex_start, tex_end, t, lerpResult);
                     const { x: tex_u, y: tex_v, z: tex_w } = lerpResult;
-                    if ((tex_w * HalfMax32UInt) > depthBuffer[i * width + j]) {
-                        DrawPixel(j, i, SampleColorUInt8(tex_u / tex_w, tex_v / tex_w, tex, texWidth, texHeight), luminance);
-                        depthBuffer[i * width + j] = tex_w * HalfMax32UInt;
+                    if ((tex_w * HalfMax32UInt) > depthBuffer[pixelIndex]) {
+                        DrawPixel(pixelIndex, SampleColorUInt8(tex_u / tex_w, tex_v / tex_w, tex, texWidth, texHeight), luminance);
+                        depthBuffer[pixelIndex] = tex_w * HalfMax32UInt;
                     }
                     t += t_step;
                 }
@@ -660,14 +664,14 @@ define("canvas", ["require", "exports", "tri", "vector"], function (require, exp
             const row = Math.trunc(v * height);
             return tex.colorsUInt32[col + width * row];
         }
-        function DrawPixel(x, y, color, luminance) {
+        function DrawPixel(pixelIndex, color, luminance) {
             // we still need to multiply the color by the luminance, since the color is stored in a Uint32Array, each color channel at a time
             color =
                 ((color & 0xff000000)) |
                     ((color & 0x00ff0000) * luminance & 0x00ff0000) |
                     ((color & 0x0000ff00) * luminance & 0x0000ff00) |
                     ((color & 0x000000ff) * luminance & 0x000000ff);
-            uint32View[x + width * y] = color;
+            uint32View[pixelIndex] = color;
         }
         function swapImageData() {
             ctx.putImageData(imageData, 0, 0);
